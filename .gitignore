@@ -1,0 +1,45 @@
+# AWS credentials and sensitive files
+aws_node_ips.md
+*.pem
+fl-thesis-key.pem
+
+# Personal / thesis documents
+Steps.txt
+Thesis_Report_4thSem.pdf
+
+# Python
+__pycache__/
+shared/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Dataset (large, downloadable via torchvision)
+data/
+
+# Logs and experiment output
+logs/
+results/
+*.log
+*.out
+
+# Private run guide and experiment scripts (contain real IPs)
+How to Run.md
+exp*.sh
+
+# Superseded files (kept locally for reference only)
+central_server.py
+central_client.py
+fl_node_async.py
+
+# OS files
+.DS_Store
+Thumbs.db
