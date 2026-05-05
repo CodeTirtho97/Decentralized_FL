@@ -20,7 +20,7 @@ from shared.model import CNNCifar
 from shared.net   import send_data, recv_data, make_server_socket
 from shared.train import fedavg
 
-FAIL_ROUND = 16
+FAIL_ROUND = 10
 
 
 # ============================================================
@@ -32,7 +32,7 @@ def receive_models(server_ip, port, num_clients):
     print()
 
     srv           = make_server_socket(server_ip, port, backlog=num_clients)
-    srv.settimeout(180)
+    srv.settimeout(360)
     client_states = []
     client_sizes  = []
 
@@ -228,8 +228,8 @@ if __name__ == '__main__':
                         help='Private IP of this instance (Node 0)')
     parser.add_argument('--clients', type=int, default=7,
                         help='Number of clients to wait for  (default: 7)')
-    parser.add_argument('--rounds', type=int, default=30,
-                        help='Number of FL rounds  (default: 30)')
+    parser.add_argument('--rounds', type=int, default=20,
+                        help='Number of FL rounds  (default: 20)')
     parser.add_argument('--fault-demo', action='store_true',
                         help='Experiment 5-B: server exits at round 16 to demonstrate SPOF')
 

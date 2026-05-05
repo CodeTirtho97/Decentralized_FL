@@ -23,7 +23,7 @@ from shared.data  import get_loaders
 from shared.net   import send_data, recv_data
 from shared.train import train_local, evaluate
 
-FAIL_ROUND = 16
+FAIL_ROUND = 10
 
 
 # ============================================================
@@ -263,8 +263,8 @@ if __name__ == '__main__':
                         help='Data distribution  (default: iid)')
     parser.add_argument('--alpha',   type=float, default=0.5,
                         help='Dirichlet alpha for non_iid  (default: 0.5)')
-    parser.add_argument('--rounds',  type=int, default=30,
-                        help='Number of FL rounds  (default: 30)')
+    parser.add_argument('--rounds',  type=int, default=20,
+                        help='Number of FL rounds  (default: 20)')
     parser.add_argument('--fault-demo', action='store_true',
                         help='Experiment 5-B: log SPOF confirmation when server dies')
 

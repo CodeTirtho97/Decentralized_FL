@@ -28,7 +28,7 @@ from shared.train import train_local, evaluate, blend_models
 
 BASE_PORT  = 8000    # node i listens on BASE_PORT + i
 ALPHA      = 0.5     # gossip blend factor
-FAIL_ROUND = 16      # Experiment 5-A: node 3 exits at this round
+FAIL_ROUND = 10      # Experiment 5-A: node 3 exits at this round
 
 
 # ============================================================
@@ -358,8 +358,8 @@ if __name__ == '__main__':
                         help='Data distribution  (default: iid)')
     parser.add_argument('--alpha',  type=float, default=0.5,
                         help='Dirichlet alpha for non_iid  (default: 0.5)')
-    parser.add_argument('--rounds', type=int, default=30,
-                        help='Number of FL rounds  (default: 30)')
+    parser.add_argument('--rounds', type=int, default=20,
+                        help='Number of FL rounds  (default: 20)')
     parser.add_argument('--fault-demo', action='store_true',
                         help='Experiment 5-A: Node 3 exits at round 16 to demonstrate no-SPOF')
 
