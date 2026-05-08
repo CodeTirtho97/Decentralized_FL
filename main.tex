@@ -1,0 +1,1906 @@
+\documentclass[12pt]{report}
+\usepackage[a4paper, top=1in, bottom=1in, left=1.25in, right=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb}
+\usepackage[utf8]{inputenc}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf}
+\usepackage{subcaption}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage[numbers]{natbib}
+\usepackage{tikz}
+\newcommand{\circled}[1]{\tikz[baseline=(char.base)]{
+  \node[shape=circle, draw, inner sep=1pt, font=\scriptsize] (char) {#1};}}
+\usetikzlibrary{arrows.meta, positioning, fit, backgrounds, shapes.geometric, calc, shadows}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+
+% ============================================
+% SPACING
+% ============================================
+\onehalfspacing
+\setlist{nosep, leftmargin=*, topsep=3pt, partopsep=0pt, itemsep=2pt}
+\AtBeginDocument{%
+  \setlength{\abovedisplayskip}{8pt plus 2pt minus 4pt}
+  \setlength{\belowdisplayskip}{8pt plus 2pt minus 4pt}
+  \setlength{\abovedisplayshortskip}{4pt plus 2pt minus 2pt}
+  \setlength{\belowdisplayshortskip}{4pt plus 2pt minus 2pt}
+}
+\setlength{\textfloatsep}{16pt plus 4pt minus 4pt}
+\setlength{\floatsep}{14pt plus 4pt minus 4pt}
+\setlength{\intextsep}{14pt plus 4pt minus 4pt}
+
+% ============================================
+% HEADER AND FOOTER
+% ============================================
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\nouppercase{\leftmark}}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyfoot{}
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% ============================================
+% CHAPTER AND SECTION HEADING FORMAT
+% ============================================
+\titleformat{\chapter}[display]
+  {\normalfont\Large\bfseries\centering}
+  {\chaptertitlename\ \thechapter}
+  {14pt}
+  {\Large}
+
+\titleformat{\section}
+  {\normalfont\large\bfseries}
+  {\thesection}
+  {1em}{}
+
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries}
+  {\thesubsection}
+  {1em}{}
+
+% ============================================
+% TOC / LOF / LOT / REFERENCES NAMES
+% ============================================
+\renewcommand{\contentsname}{\centerline{CONTENTS}}
+\renewcommand{\listfigurename}{\centerline{LIST OF FIGURES}}
+\renewcommand{\listtablename}{\centerline{LIST OF TABLES}}
+\renewcommand{\bibname}{\centerline{REFERENCES}}
+
+% ============================================
+% DOCUMENT METADATA
+% ============================================
+\title{Empirical Evaluation of Decentralized Federated Learning:\\
+A Gossip-Based Approach on Cloud Infrastructure}
+\author{Tirthoraj Bhattacharya (MSE2024008)}
+\date{May, 2026}
+
+% ============================================
+% BEGIN DOCUMENT
+% ============================================
+\begin{document}
+
+% ============================================
+% TITLE PAGE
+% ============================================
+\begin{titlepage}
+    \centering
+    \Large \textbf{A Project Report On} \\
+    \vspace{0.6cm}
+    \LARGE \textbf{Empirical Evaluation of Decentralized Federated Learning:
+    A Gossip-Based Approach on Cloud Infrastructure} \\
+    \vspace{1cm}
+    \large Submitted in partial fulfilment of the requirements \\
+    for the award of the degree of \\
+    \vspace{0.2cm}
+    \textbf{Master of Technology} \\
+    In \\
+    \textbf{Information Technology} \\
+    \vspace{0.7cm}
+    By \\
+    \vspace{0.2cm}
+    \textbf{Tirthoraj Bhattacharya (MSE2024008)} \\
+    (4th Semester) \\
+    \vspace{0.5cm}
+    Under the Supervision of \\
+    \vspace{0.2cm}
+    \textbf{Dr. Anshu S. Anand} \\
+    \vspace{0.8cm}
+    \includegraphics[width=0.28\textwidth]{iiita_logo.png} \\
+    \vspace{0.5cm}
+    \large \textbf{Department of Information Technology} \\
+    \textbf{Indian Institute of Information Technology, Allahabad} \\
+    Devghat, Jhalwa, Prayagraj-211015 (UP) INDIA \\
+    \vspace{0.3cm}
+    \large May, 2026
+\end{titlepage}
+
+% ============================================
+% CERTIFICATE PAGE
+% ============================================
+\newpage
+\thispagestyle{empty}
+\begin{center}
+\includegraphics[width=0.725in]{iiita_logo}
+\vspace{0.2cm}
+
+{\large\textbf{Indian Institute of Information Technology, Allahabad}} \\
+{\large Devghat, Jhalwa, Prayagraj-211015 (UP) INDIA}
+\end{center}
+
+\vspace{1cm}
+\begin{center}
+\textbf{\LARGE CERTIFICATE}
+\end{center}
+
+\vspace{1cm}
+\onehalfspacing
+This is to certify that the project entitled ``\textbf{Empirical Evaluation of
+Decentralized Federated Learning: A Gossip-Based Approach on Cloud Infrastructure}''
+submitted by Mr.\ \textbf{Tirthoraj Bhattacharya (MSE2024008)} to Indian Institute
+of Information Technology Allahabad, Prayagraj, Uttar Pradesh, in partial fulfilment
+for the award of Degree of Master of Technology in Information Technology is a
+bonafide record of the project work carried out by him under my supervision during
+the academic year 2025--26.
+
+\vspace{1.5cm}
+\begin{flushright}
+\textbf{Dr. Anshu S. Anand} \\
+\textbf{Dept. of Information Technology} \\
+\textbf{IIIT Allahabad}
+\end{flushright}
+
+% ============================================
+% ACKNOWLEDGEMENT PAGE
+% ============================================
+\newpage
+\thispagestyle{empty}
+\begin{center}
+\includegraphics[width=0.725in]{iiita_logo}
+\vspace{0.2cm}
+
+{\large\textbf{Indian Institute of Information Technology, Allahabad}} \\
+{\large Devghat, Jhalwa, Prayagraj-211015 (UP) INDIA}
+\end{center}
+
+\vspace{1cm}
+\begin{center}
+\textbf{\LARGE ACKNOWLEDGEMENT}
+\end{center}
+
+\vspace{0.5cm}
+\onehalfspacing
+I express my sincere gratitude to all those who have supported me throughout this
+research. I am deeply thankful to my supervisor, \textbf{Dr.\ Anshu S.\ Anand},
+for his invaluable guidance, encouragement, and constructive feedback at every
+stage of this work. His mentorship was instrumental in shaping the research
+direction and ensuring academic rigour throughout.
+
+I also extend my appreciation to the faculty and staff of the Department of
+Information Technology at IIIT Allahabad for providing a supportive environment
+for academic exploration. I am grateful to my peers and colleagues for their
+discussions and encouragement, which enriched both my understanding of the subject
+and the quality of this work.
+
+Finally, I acknowledge the researchers behind the foundational works in federated
+learning and decentralized gossip protocols --- particularly McMahan et al.\
+(FedAvg), Lian et al.\ (D-PSGD), and Lalitha et al.\ (Gossip FL) --- whose
+contributions provided the theoretical basis upon which this empirical
+investigation was built.
+
+\vspace{1cm}
+\begin{flushright}
+\textbf{Tirthoraj Bhattacharya} \\
+\textbf{MSE2024008}
+\end{flushright}
+
+% ============================================
+% ABSTRACT PAGE
+% ============================================
+\newpage
+\thispagestyle{empty}
+\begin{center}
+\textbf{\LARGE ABSTRACT}
+\end{center}
+
+\vspace{0.5cm}
+\onehalfspacing
+
+Federated Learning (FL) allows multiple devices to train a shared model without
+sharing their raw data. The standard approach, FedAvg, depends on a central
+server to coordinate every training round. If that server goes down, the entire
+system halts --- a Single Point of Failure (SPOF) that is widely discussed in
+the literature but never measured on real distributed infrastructure.
+
+This thesis compares centralised FedAvg and decentralised gossip FL, both
+deployed on 8 real AWS EC2 instances using CIFAR-10 and a standard CNN.
+Six experiments cover normal training under IID and Non-IID data, plus live
+failure injection in both architectures.
+
+The main findings are: decentralised gossip reaches within 4.2 percentage
+points of FedAvg accuracy under both data conditions. When the server is
+deliberately killed, all 7 clients stop permanently at round 9 and never
+recover. When one node is killed in the decentralised setup, the remaining
+7 nodes complete all 50 rounds without halting. Additionally, a previously
+undocumented cascading failure behaviour was observed --- a failed node's
+TCP timeout inflates its neighbours' round time, which eventually cuts them
+off from the rest of the ring entirely.
+
+The results show that decentralised FL eliminates a critical failure mode
+at a modest accuracy cost, and reveal real-world system behaviours that
+theory alone does not predict.
+
+\vspace{0.4cm}
+\noindent\textit{Keywords: Federated Learning, Gossip Protocol, FedAvg,
+Fault Tolerance, SPOF, AWS EC2, CIFAR-10, Non-IID}
+
+% ============================================
+% TABLE OF CONTENTS / LOF / LOT
+% ============================================
+\newpage
+\pagenumbering{roman}
+\singlespacing
+\tableofcontents
+
+\newpage
+\listoffigures
+
+\newpage
+\listoftables
+
+% ============================================
+% LIST OF ABBREVIATIONS
+% ============================================
+\newpage
+\addcontentsline{toc}{chapter}{LIST OF ABBREVIATIONS}
+\begin{center}
+\textbf{\Large LIST OF ABBREVIATIONS}
+\end{center}
+\vspace{0.5cm}
+\begin{tabular}{ll}
+\textbf{AWS}     & Amazon Web Services \\[3pt]
+\textbf{CNN}     & Convolutional Neural Network \\[3pt]
+\textbf{CIFAR}   & Canadian Institute For Advanced Research (dataset) \\[3pt]
+\textbf{CPU}     & Central Processing Unit \\[3pt]
+\textbf{EC2}     & Elastic Compute Cloud \\[3pt]
+\textbf{FL}      & Federated Learning \\[3pt]
+\textbf{FedAvg}  & Federated Averaging \\[3pt]
+\textbf{GDPR}    & General Data Protection Regulation \\[3pt]
+\textbf{IID}     & Independent and Identically Distributed \\[3pt]
+\textbf{ML}      & Machine Learning \\[3pt]
+\textbf{Non-IID} & Not Independent and Identically Distributed \\[3pt]
+\textbf{P2P}     & Peer-to-Peer \\[3pt]
+\textbf{RAM}     & Random Access Memory \\[3pt]
+\textbf{SGD}     & Stochastic Gradient Descent \\[3pt]
+\textbf{SPOF}    & Single Point of Failure \\[3pt]
+\textbf{TCP}     & Transmission Control Protocol \\[3pt]
+\textbf{VM}      & Virtual Machine \\[3pt]
+\textbf{VPC}     & Virtual Private Cloud \\[3pt]
+\end{tabular}
+
+% ============================================
+% MAIN CONTENT BEGINS HERE
+% ============================================
+\newpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\onehalfspacing
+
+\chapter{Introduction}
+
+\section{Background}
+
+Federated Learning (FL), introduced by McMahan et al.~\cite{mcmahan2017}, allows
+multiple devices to train a shared machine learning model without sharing their raw
+data. Each device trains locally on its own data and only sends model weight updates
+to a central server. The server combines all received updates into a new global model
+and sends it back to the devices. This process repeats over multiple rounds until the
+model converges. Since the raw data never leaves the device, FL is naturally suited
+for applications where data privacy is important --- healthcare, finance, and edge
+computing being common examples.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  server/.style={rectangle, draw, rounded corners=20pt,
+    fill=purple!15, minimum width=3.5cm, minimum height=1.2cm,
+    font=\small\bfseries, align=center},
+  client/.style={rectangle, draw, rounded corners=4pt,
+    fill=teal!15, minimum width=2.6cm, minimum height=1.0cm,
+    font=\small, align=center},
+  up/.style={-{Stealth}, thick, color=teal!70!black},
+  down/.style={-{Stealth}, thick, dashed, color=purple!60!black}
+]
+  \node[server] (S) at (0, 3.2)
+    {\textbf{Central Server} \\ \footnotesize Aggregation};
+
+  \node[client] (C1) at (-4.5, 0) {\textbf{Device 1} \\ \footnotesize Local data};
+  \node[client] (C2) at (0,    0) {\textbf{Device 2} \\ \footnotesize Local data};
+  \node[client] (C3) at (4.5,  0) {\textbf{Device n} \\ \footnotesize Local data};
+
+  \node at (2.3, 0) {\Large $\cdots$};
+
+  %% Upload: left side of each path going up
+  \draw[up] ([xshift=-6pt]C1.north) to[out=80,in=210]
+    node[midway, left, font=\scriptsize] {$W_1$}
+    ([xshift=-8pt]S.south west);
+
+  \draw[up] ([xshift=-6pt]C2.north) --
+    node[midway, left, font=\scriptsize] {$W_2$}
+    ([xshift=-6pt]S.south);
+
+  \draw[up] ([xshift=-6pt]C3.north) to[out=100,in=330]
+    node[midway, right, font=\scriptsize] {$W_n$}
+    ([xshift=6pt]S.south east);
+
+  %% Download: right side of each path going down
+  \draw[down] ([xshift=8pt]S.south west) to[out=230,in=60]
+    node[midway, right, font=\scriptsize] {$W'$}
+    ([xshift=6pt]C1.north);
+
+  \draw[down] ([xshift=6pt]S.south) --
+    ([xshift=6pt]C2.north);
+
+  \draw[down] ([xshift=-6pt]S.south east) to[out=310,in=80]
+    ([xshift=6pt]C3.north);
+
+\end{tikzpicture}
+\caption{Standard Federated Learning Workflow}
+\label{fig:fl-workflow}
+\end{figure}
+\vspace{\baselineskip}
+
+The standard FL algorithm that implements this is Federated Averaging (FedAvg). It
+is simple, well-understood, and works well under controlled conditions. However, it
+has one structural problem that becomes critical in real-world deployments.
+
+In FedAvg, the central server is not just a coordinator --- it is the only entity
+that can aggregate models and push the training forward. Every client must upload
+to it, wait for it, and download from it every single round. This creates a hard
+dependency: \textbf{if the server goes down at any point during training, every
+client stops immediately}. There is no alternative path, no backup, and no way to
+resume without restarting the server manually. In distributed systems, this kind of
+dependency is called a \textbf{Single Point of Failure (SPOF)}.
+
+In a research setting, this is manageable --- if the server crashes, you restart
+and try again. But in real-world FL deployments --- hospitals sharing patient data
+across branches, factories running FL across machines on a shop floor, or telecom
+networks training models across hundreds of base stations --- server downtime can
+mean hours of lost training, corrupted experiment state, and no guarantee of
+recovery. The larger the deployment, the more damaging an unexpected server failure
+becomes.
+
+The research community recognises this problem. Most major FL survey papers identify
+the SPOF vulnerability of centralised architectures as one of the key barriers to
+real-world adoption. The proposed solution is \textbf{decentralised FL} --- where
+nodes communicate directly with each other in a peer-to-peer network instead of
+routing everything through a central server. If one node fails in such a setup,
+the others can continue exchanging models and training without interruption. No
+single node's failure can bring the entire system down.
+
+This sounds like a clean solution, and theoretically it is. Convergence proofs
+exist showing that decentralised gossip FL can match centralised FL performance
+under ideal conditions. But here is the gap: \textbf{none of this has been tested
+on real distributed infrastructure with live failure injection}. Every fault
+tolerance claim in the decentralised FL literature is backed by either a
+mathematical proof or a simulation. What actually happens when a server or node
+is killed mid-experiment on real machines has never been directly measured and
+reported.
+
+This thesis fills that gap. It implements both a centralised FedAvg system and a
+decentralised gossip FL system from scratch, deploys them on 8 real AWS EC2 cloud
+instances, and runs six controlled experiments --- including deliberately killing
+the server in one experiment and a ring node in another --- to observe and measure
+the real outcome in both cases.
+
+\section{Contributions}
+
+The specific contributions of this thesis are:
+
+\begin{enumerate}
+  \item A live demonstration of the SPOF problem in centralised FL on real cloud
+  infrastructure, with timestamped log evidence from actual AWS EC2 instances ---
+  not a simulation.
+
+  \item The first measured accuracy-fault tolerance tradeoff between synchronous
+  gossip FL and FedAvg under identical hardware and data conditions.
+
+  \item Discovery of a cascading failure behaviour in synchronous ring gossip
+  caused by TCP timeout design --- an emergent real-world behaviour not described
+  in any existing FL paper.
+
+  \item A Non-IID sensitivity comparison between both architectures, with an
+  explanation of why gossip FL degrades more under heterogeneous data.
+
+  \item A complete open implementation of both architectures on 8 real AWS EC2
+  instances with full experiment logs.
+\end{enumerate}
+
+\chapter{Literature Review}
+
+This chapter surveys the existing work that directly leads to the research
+question this thesis addresses. It covers the foundations of federated learning,
+the challenges of non-IID data, the theoretical basis for decentralised FL, and
+ends with the specific gap that remains unfilled in the literature.
+
+\section{Federated Learning Foundations}
+
+McMahan et al.~\cite{mcmahan2017} introduced Federated Averaging (FedAvg), which
+remains the dominant FL algorithm. In FedAvg, a central server coordinates training
+across clients --- sending the global model out, collecting locally trained updates,
+averaging them, and repeating. The key insight was that local SGD for multiple
+epochs before aggregation is both communication-efficient and surprisingly effective.
+FedAvg set the standard that all subsequent FL work builds on, and it is the
+centralised baseline this thesis compares against.
+
+Bonawitz et al.~\cite{bonawitz2019} studied FedAvg at scale and were among the
+first to document the server's dual role as both a coordination hub and a
+vulnerability. Their work identified that at production scale, the server becomes
+a bottleneck and its failure has system-wide consequences --- an early
+acknowledgement of the SPOF problem that this thesis directly investigates.
+
+\section{Non-IID Data in Federated Learning}
+
+A key assumption in the original FedAvg paper is that data is identically
+distributed across clients. In practice, this is almost never true. Each device
+tends to have data skewed toward its own usage patterns --- a user's phone sees
+their photos, a hospital sees its patient population, a factory sees its own
+machines. This is called \textbf{non-IID data}, and it creates a problem.
+
+When data distributions differ across clients, locally trained models diverge from
+each other during training. Averaging divergent models produces a global model that
+does not represent any single client's data well. This phenomenon is called
+\textbf{client drift}, and Li et al.~\cite{li2020} studied it formally, showing
+that non-IID conditions cause FedAvg's convergence to slow significantly and final
+accuracy to drop compared to the IID case. Their analysis motivates running
+experiments under both data regimes --- as this thesis does --- to understand how
+each architecture handles real-world data heterogeneity.
+
+\section{Decentralised Federated Learning}
+
+The theoretical case for decentralised FL was established by Lian et
+al.~\cite{lian2017}, who proved that decentralised parallel SGD on a gossip
+communication graph converges at the same asymptotic rate as centralised SGD
+under certain conditions. This is a foundational result --- it shows that
+removing the central server does not necessarily hurt convergence, giving
+theoretical credibility to the gossip-based approach.
+
+Lalitha et al.~\cite{lalitha2019} proposed a fully decentralised FL framework
+using gossip protocols, where each node exchanges models directly with a subset
+of neighbours and aggregates locally. Their work demonstrated that gossip-based
+FL can learn effectively without any central coordination, and they argued that
+the peer-to-peer structure provides inherent fault tolerance --- if one node
+fails, the others simply continue. However, this fault tolerance claim was made
+theoretically, without any real deployment or failure injection to validate it.
+
+Boyd et al.~\cite{boyd2006} provided the mathematical foundations for gossip
+algorithms on fixed network topologies. Their work on randomised gossip shows
+how information spreads through a ring topology and at what rate nodes converge
+to a common value. This gives the ring topology used in this thesis a solid
+theoretical grounding --- it is not an arbitrary choice but a well-studied
+baseline for gossip-based distributed computation.
+
+\subsection*{Positioning of Existing Work}
+ 
+Table~\ref{tab:lit-comparison} summarises key decentralised FL papers
+alongside this thesis. The gap is clear: no existing paper combines
+real infrastructure deployment with controlled fault injection.
+ 
+\begin{table}[H]
+\centering
+\caption{Comparison of decentralised FL works}
+\label{tab:lit-comparison}
+\begin{tabular}{lllll}
+\toprule
+\textbf{Work} & \textbf{Topology} & \textbf{Scale} &
+\textbf{Real Infra?} & \textbf{Fault Tested?} \\
+\midrule
+Lian et al.~\cite{lian2017}         & General graph & Simulation & No  & No \\
+Lalitha et al.~\cite{lalitha2019}   & General gossip & Simulation & No  & No \\
+Roy et al.~\cite{roy2019}           & P2P            & Simulation & No  & No \\
+Beltran et al.~\cite{beltransurvey2023} & Survey    & N/A        & N/A & N/A \\
+\textbf{This thesis}                & \textbf{Ring}  & \textbf{8 AWS EC2} &
+\textbf{Yes} & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The Gap This Thesis Fills}
+
+Beltran et al.~\cite{beltransurvey2023} conducted one of the most comprehensive
+surveys of decentralised FL to date. Their survey covers architectures, aggregation
+strategies, fault tolerance mechanisms, and open challenges across dozens of papers.
+A recurring observation in their survey is that decentralised FL is theoretically
+mature but empirically underexplored --- specifically, that fault tolerance is
+argued for structurally but never actually demonstrated through live failure
+experiments on real distributed infrastructure.
+
+Kairouz et al.~\cite{kairouz2021} made a similar observation from a broader FL
+perspective, noting that simulation-based evaluations dominate the field and that
+real deployment behaviour --- including failures, network variability, and hardware
+differences --- is rarely captured in published results.
+
+Both surveys point to the same gap: the FL community lacks empirical evidence of
+what decentralised FL actually does under real failure conditions, and how much
+accuracy it sacrifices compared to centralised FedAvg when deployed on real
+machines. This thesis is a direct response to that gap. It takes the architectures
+that the literature has proposed and analysed theoretically, implements both from
+scratch, runs them on real AWS EC2 infrastructure, and reports what actually
+happens --- including under deliberate, controlled failure injection that no
+existing paper has performed on real hardware.
+
+\chapter{Problem Formulation}
+
+\section{Problem Statement}
+
+As established in the previous chapters, centralised federated learning has a
+well-known architectural weakness --- everything depends on the central server.
+The research community has proposed decentralised FL as the solution, where nodes
+communicate directly in a peer-to-peer network. The theoretical case is strong:
+no central server means no single point of failure, and convergence proofs show
+that gossip-based FL can match centralised performance under ideal conditions.
+
+But theory and simulation are not the same as real deployment. Real machines
+fail unexpectedly. Real networks behave differently from simulated ones. Real
+TCP connections time out. None of the existing decentralised FL papers have
+actually deployed both architectures on real infrastructure, injected failures,
+and measured what happens.
+
+This thesis addresses that directly. The central research question is:
+
+\vspace{0.3cm}
+\textit{How does decentralised synchronous gossip FL compare to centralised
+FedAvg in terms of model accuracy, communication behaviour, and fault tolerance
+--- when both are deployed on real cloud infrastructure under identical
+conditions, including under live failure injection?}
+\vspace{0.3cm}
+
+\section{Research Questions}
+
+The central question above breaks down into four specific questions that the
+experiments in this thesis are designed to answer.
+
+\textbf{RQ1: Does decentralised gossip FL achieve comparable accuracy to
+centralised FedAvg?}
+
+Removing the central server changes how models are aggregated. In centralised
+FL, every client's model is averaged together in one step. In gossip FL, each
+node only blends with its two immediate neighbours, and knowledge spreads
+gradually across the ring. This raises the question of whether this local
+blending is good enough to reach the same accuracy as global averaging. We test
+this under both IID and Non-IID data conditions, since the answer may differ
+depending on how similar or different the data across nodes is.
+
+\textbf{RQ2: How does each architecture behave under Non-IID data?}
+
+In practice, data across FL nodes is rarely uniform. Each node tends to have
+data skewed toward certain patterns --- a hospital sees certain patient types,
+a factory sees certain machine readings. This non-IID condition is known to hurt
+FL accuracy. The question is whether it hurts both architectures equally, or
+whether the smaller aggregation pool in gossip FL (2 neighbours vs.\ all 7
+clients) makes it more sensitive to data heterogeneity.
+
+\textbf{RQ3: What actually happens when a critical node fails during training?}
+
+This is the core fault tolerance question. In centralised FL, the server failing
+should halt all clients --- but by exactly how much, for exactly how long, and
+with what final accuracy impact? In decentralised FL, a node failing should allow
+others to continue --- but does the ring recover cleanly, or are there secondary
+effects? We answer this by deliberately killing the server (centralised) and one
+ring node (decentralised) mid-experiment on real AWS infrastructure and observing
+the outcome in both cases.
+
+\textbf{RQ4: Are there failure behaviours in ring gossip that theory does not
+predict?}
+
+Theoretical gossip models assume clean message passing --- a node either sends
+its model successfully or it does not. Real TCP communication is more complex.
+Timeouts, retries, and synchronisation delays can create second-order effects
+that simple theoretical models miss. This question asks whether deploying on
+real infrastructure reveals any such behaviours.
+
+\section{Design Decisions}
+
+Two design choices were made deliberately to ensure the comparison is fair and
+interpretable.
+
+\textbf{Synchronous protocol for both architectures.} In a synchronous protocol,
+every node waits for its partners to finish before proceeding to the next round.
+Using async on one side would introduce model staleness as a second variable on
+top of topology, making it impossible to attribute any accuracy difference to
+topology alone. Keeping both sides synchronous means the only thing that differs
+between the two systems is whether there is a central server or not.
+
+\textbf{Fixed ring topology for the decentralised system.} Each node in the ring
+connects to exactly two neighbours --- the node to its left and the node to its
+right. This is the standard baseline gossip topology in the
+literature~\cite{boyd2006}, and is well-understood in terms of how information
+propagates. More complex topologies --- random gossip, dynamic graphs --- would
+add variables that make the results harder to interpret. The ring is the right
+choice for an empirical comparison study whose goal is to isolate the effect of
+decentralisation itself.
+
+\section{Scope and Limitations}
+
+This thesis focuses specifically on synchronous FL on a fixed ring topology with
+8 nodes. It does not address asynchronous FL, dynamic topologies, Byzantine fault
+tolerance, or large-scale deployments beyond 8 nodes. These are all valid
+research directions but are explicitly out of scope here --- the goal is a clean,
+controlled comparison, not a comprehensive system covering all possible scenarios.
+Scaling behaviour, adaptive timeout mechanisms, and random gossip topologies are
+left as directions for future work.
+
+\chapter{System Design and Architecture}
+
+This chapter describes the design of the two federated learning systems built
+for this thesis --- a centralised FedAvg system and a decentralised gossip FL
+system. Both were implemented from scratch in Python and PyTorch using raw TCP
+socket communication, and deployed on real AWS EC2 instances.
+
+\section{Centralised FedAvg Architecture}
+
+The centralised system follows the standard FedAvg design. One node acts as the
+server and the remaining seven act as clients, forming a star topology where all
+communication passes through the server.
+
+Each training round proceeds in three steps. First, the server opens a listener
+and waits to receive locally trained models from all seven clients. Once all
+models arrive, it computes a simple average --- equal weight for each client ---
+and produces an updated global model. Finally, it broadcasts this global model
+back to all clients, and the next round begins.
+
+Communication uses two TCP ports on the server: one for clients to upload their
+models, and one for the server to broadcast the aggregated model back. Each model
+is serialised using PyTorch's \texttt{torch.save} and sent as raw bytes over the
+socket. The server waits for all seven clients before aggregating --- no client
+can proceed to the next round until the server has received from everyone and
+broadcast the result.
+
+This synchronous, server-centric design is exactly the standard FedAvg setup
+described in McMahan et al.~\cite{mcmahan2017}. It serves as the baseline against
+which the decentralised system is compared.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  server/.style={circle, draw=black, fill=red!20, minimum size=1.2cm, font=\small\bfseries},
+  client/.style={circle, draw=black, fill=blue!15, minimum size=1cm, font=\small},
+  arr/.style={-{Stealth}, thick}
+]
+  \node[server] (S) at (0,0) {Server};
+  \foreach \i/\angle in {1/90, 2/39, 3/333, 4/282, 5/231, 6/180, 7/129}{
+    \node[client] (C\i) at (\angle:3cm) {C\i};
+    \draw[arr, bend left=10] (S) to (C\i);
+    \draw[arr, bend left=10] (C\i) to (S);
+  }
+\end{tikzpicture}
+\caption{Centralised FedAvg --- Star Topology (1 Server + 7 Clients)}
+\label{fig:centralised-arch}
+\end{figure}
+
+The structural consequence of this design is clear: the server is the only entity
+that can move training forward. If it fails, all clients are left waiting
+indefinitely with no recovery path.
+
+\section{Decentralised Gossip FL Architecture}
+
+The decentralised system eliminates the server entirely. All 8 nodes are equal
+peers arranged in a fixed ring topology, where each node is connected only to its
+immediate left and right neighbours.
+
+Each training round proceeds in three steps as well, but the logic is local to
+each node. First, every node trains independently on its local data for a fixed
+number of epochs. Then, each node simultaneously pushes its trained model to both
+neighbours and receives models from both neighbours --- this exchange is
+bidirectional and happens in parallel across the ring. Finally, each node blends
+the three models it now holds (its own plus the two received) using equal-weight
+averaging, evaluates the blended model, and waits for the next round to begin.
+
+Communication uses one TCP port per node. Each node opens a listener for incoming
+models and connects outward to push its model to both neighbours. If a push fails
+--- because the neighbour is temporarily unavailable --- the node retries for up
+to 90 seconds before giving up and continuing with whatever models it has received.
+This retry mechanism is what creates the timing effects observed in the fault
+tolerance experiments.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  node/.style={circle, draw=black, fill=blue!15, minimum size=1cm, font=\small},
+  arr/.style={-{Stealth}, thick}
+]
+  \foreach \i/\angle in {0/90, 1/45, 2/0, 3/315, 4/270, 5/225, 6/180, 7/135}{
+    \node[node] (N\i) at (\angle:3cm) {N\i};
+  }
+  \foreach \i/\j in {0/1, 1/2, 2/3, 3/4, 4/5, 5/6, 6/7, 7/0}{
+    \draw[arr, bend left=15] (N\i) to (N\j);
+    \draw[arr, bend left=15] (N\j) to (N\i);
+  }
+\end{tikzpicture}
+\caption{Decentralised Gossip FL --- Ring Topology (8 Peer Nodes)}
+\label{fig:decentralised-arch}
+\end{figure}
+
+Because no node plays a special role, no single node's failure can halt the
+system. The remaining nodes continue exchanging with their surviving neighbours
+and completing training rounds independently.
+
+\section{Design Comparison}
+
+Table~\ref{tab:design-comparison} summarises the key differences between the
+two architectures.
+
+\begin{table}[ht]
+\centering
+\caption{Architecture Comparison}
+\label{tab:design-comparison}
+\begin{tabular}{lll}
+\toprule
+\textbf{Property} & \textbf{Centralised FedAvg} & \textbf{Decentralised Gossip} \\
+\midrule
+Topology          & Star (1 server + 7 clients) & Ring (8 equal peers) \\
+Aggregation       & Global average at server    & Local blend with 2 neighbours \\
+Communication     & All clients $\to$ server    & Each node $\leftrightarrow$ 2 neighbours \\
+SPOF              & Yes (server)                & No \\
+Knowledge spread  & Instant (1 round)           & Gradual (across ring hops) \\
+Failure recovery  & None                        & Continues with available peers \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The key tradeoff is visible in the table. Centralised FL spreads knowledge
+instantly --- every client's model contributes to every other client's update in
+the same round. In gossip FL, knowledge spreads gradually hop by hop around the
+ring, which means it takes more rounds for information from one node to reach a
+node on the opposite side of the ring. This slower knowledge propagation is the
+primary reason gossip FL may achieve slightly lower accuracy, and it grows more
+significant under non-IID data where the information from distant nodes is
+particularly valuable.
+
+\section{Infrastructure}
+
+Both systems were deployed on AWS EC2 \texttt{t3.micro} instances running Ubuntu
+22.04, all within the same VPC and subnet. Nodes communicate over the private
+subnet using their internal IP addresses. Each instance runs one FL process ---
+either the server or a client in the centralised case, or one ring node in the
+decentralised case. No FL framework was used; both systems were implemented
+entirely from scratch using Python sockets and PyTorch.
+
+\section{Communication Protocol Detail}
+ 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  scale=0.88,
+  server/.style={rectangle, draw=purple!60, rounded corners=4pt,
+    fill=purple!12, minimum width=2.4cm, minimum height=0.75cm,
+    font=\small\bfseries},
+  client/.style={rectangle, draw=teal!60, rounded corners=4pt,
+    fill=teal!12, minimum width=2.0cm, minimum height=0.7cm,
+    font=\small},
+  dots/.style={rectangle, draw=gray!40, rounded corners=4pt,
+    fill=gray!8, minimum width=1.2cm, minimum height=0.7cm,
+    font=\small},
+  up/.style={-{Stealth[length=5pt]}, thick, color=teal!70!black},
+  down/.style={-{Stealth[length=5pt]}, thick, dashed, color=purple!55},
+  ring/.style={-{Stealth[length=5pt]}, thick, color=teal!70!black}
+]
+
+%% ===== LEFT: CENTRALISED =====
+\node[font=\small\bfseries] at (0, 1.0) {Centralised FedAvg};
+\node[server] (SRV) at (0,  0)   {Server};
+\node[client] (C1)  at (-2, -3)  {Client 1};
+\node[client] (C2)  at ( 0, -3)  {Client 2};
+\node[dots]   (Cn)  at ( 2, -3)  {\ldots};
+
+\draw[up] ([xshift=-5pt]C1.north)
+  to[out=80, in=220] ([xshift=-5pt]SRV.south west);
+\draw[up] ([xshift=-4pt]C2.north)
+  -- ([xshift=-4pt]SRV.south);
+
+\draw[down] ([xshift=5pt]SRV.south west)
+  to[out=230, in=70] ([xshift=5pt]C1.north);
+\draw[down] ([xshift=4pt]SRV.south)
+  -- ([xshift=4pt]C2.north);
+\draw[down] (SRV.south east)
+  to[out=310, in=90] (Cn.north);
+
+\node[font=\scriptsize, color=teal!70!black] at (-2.9, -1.2) {upload $W_i$};
+\node[font=\scriptsize, color=purple!70]     at ( 1.9, -1.5) {broadcast $W'$};
+
+\draw[gray!35, dashed, rounded corners=6pt]
+  (-3.3, 1.3) rectangle (3.3, -3.8);
+
+%% ===== RIGHT: DECENTRALISED =====
+\node[font=\small\bfseries] at (7.8, 1.0) {Decentralised Gossip};
+\node[client] (N0)  at (7.8,  0)   {Node 0};
+\node[client] (N7)  at (5.9, -2.0) {Node 7};
+\node[client] (N1)  at (9.7, -2.0) {Node 1};
+\node[dots]   (Nd1) at (5.9, -3.5) {\ldots};
+\node[dots]   (Nd2) at (9.7, -3.5) {\ldots};
+
+\draw[ring] ([xshift=-5pt]N0.south west)
+  to[out=230, in=85] ([xshift=-4pt]N7.north);
+\draw[ring] ([xshift=4pt]N7.north)
+  to[out=65, in=250] ([xshift=5pt]N0.south west);
+
+\draw[ring] ([xshift=5pt]N0.south east)
+  to[out=310, in=95] ([xshift=4pt]N1.north);
+\draw[ring] ([xshift=-4pt]N1.north)
+  to[out=115, in=290] ([xshift=-5pt]N0.south east);
+
+\draw[ring] ([xshift=-4pt]N7.south) -- ([xshift=-4pt]Nd1.north);
+\draw[ring] ([xshift=4pt]Nd1.north) -- ([xshift=4pt]N7.south);
+\draw[ring] ([xshift=-4pt]N1.south) -- ([xshift=-4pt]Nd2.north);
+\draw[ring] ([xshift=4pt]Nd2.north) -- ([xshift=4pt]N1.south);
+
+\node[font=\scriptsize, color=teal!70!black] at (6.6, -0.8) {push $W$};
+\node[font=\scriptsize, color=teal!70!black] at (9.0, -0.8) {push $W$};
+
+\draw[gray!35, dashed, rounded corners=6pt]
+  (4.7, 1.3) rectangle (10.9, -3.8);
+
+%% Vertical divider
+\draw[gray!30, dashed] (3.8, 1.3) -- (3.8, -3.8);
+
+\end{tikzpicture}
+
+\smallskip
+\noindent
+\begin{minipage}[t]{0.47\textwidth}
+\small\raggedright
+\textbf{Centralised (left):} (1)~Clients upload $W_i$ to server.
+(2)~Server computes FedAvg. (3)~Server broadcasts $W'$ to all
+clients. Steps are sequential --- server failure halts all clients.
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.47\textwidth}
+\small\raggedright
+\textbf{Decentralised (right):} (1)~Each node trains locally.
+(2)~Pushes model to both ring neighbours. (3)~Receives and blends.
+All steps happen simultaneously --- no server, no SPOF.
+\end{minipage}
+
+\caption{Communication protocol for one training round.}
+\label{fig:comm-sequence}
+\end{figure}
+ 
+In the centralised system, each round involves two sequential network
+phases: all clients upload, then the server broadcasts. In the
+decentralised system, both push and receive happen in parallel across
+the ring --- each node pushes to two neighbours and receives from two
+neighbours simultaneously. This parallel exchange is why gossip
+communication time is dominated by neighbour training speed rather
+than network bandwidth.
+ 
+Model serialisation in both systems uses PyTorch's \texttt{state\_dict}
+serialised with \texttt{torch.save} to a byte buffer, transmitted
+as raw bytes over TCP. The serialised CNNCifar model is consistently
+245.3~KB per transfer. No compression or differential encoding is used
+--- the full model is exchanged every round.
+
+\chapter{Experimental Methodology}
+
+This chapter describes the experimental setup used to compare the two
+architectures. It covers the infrastructure, the model and dataset, the
+data distribution conditions, and the six experiments that were run.
+
+\section{Infrastructure}
+
+Both architectures were deployed on \textbf{8 AWS EC2 t3.micro instances},
+each running Ubuntu 22.04. All instances were placed within the same Virtual
+Private Cloud (VPC) and subnet, communicating over private IP addresses. Each
+instance ran a single FL process --- either the server or a client in the
+centralised setup, or one ring node in the decentralised setup.
+
+No FL framework was used. Both systems were implemented from scratch in Python
+using raw TCP sockets and PyTorch. This was a deliberate choice --- using a
+framework would abstract away the network behaviour and make it harder to observe
+real failure effects.
+
+\section{Model and Dataset}
+
+All experiments used \textbf{CIFAR-10}, a standard image classification dataset
+with 50,000 training images and 10,000 test images across 10 classes. The model
+was a simple CNN (referred to as CNNCifar) with two convolutional layers followed
+by two fully connected layers, totalling approximately 62,000 parameters. The
+serialised model size was 245.3 KB per exchange.
+
+CIFAR-10 was chosen because it is a well-established FL benchmark, large enough
+to show meaningful accuracy differences across data distributions, and small
+enough to run efficiently on t3.micro instances without GPU acceleration.
+
+\section{Data Distribution}
+
+Each experiment was run under two data distribution conditions.
+
+\textbf{IID} --- the 50,000 training images were split randomly and uniformly
+across all 7 clients (centralised) or 8 nodes (decentralised), giving each
+participant roughly 6,250 samples with balanced class representation. This is
+the ideal case where all participants see similar data.
+
+\textbf{Non-IID} --- data was distributed using a \textbf{Dirichlet distribution
+with $\alpha = 0.5$}. This causes each participant to receive a skewed sample
+dominated by only a few classes, making local models diverge during training.
+This is closer to real-world FL deployments where each device naturally sees
+only the data relevant to its own context. The value $\alpha = 0.5$ represents
+moderate heterogeneity --- severe enough to meaningfully stress-test both
+architectures, but not so extreme as to make learning practically impossible.
+
+\section{Hyperparameters}
+
+The following hyperparameters were kept identical across all six experiments to
+ensure a fair comparison between the two architectures.
+
+\begin{table}[ht]
+\centering
+\caption{Hyperparameters used across all experiments}
+\label{tab:hyperparams}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+FL rounds          & 50 \\
+Local epochs       & 5 \\
+Batch size         & 64 \\
+Optimiser          & SGD \\
+Learning rate      & 0.01 \\
+Momentum           & 0.5 \\
+Inter-round sleep  & 5 seconds \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Pilot Study}
+
+Before the main AWS experiments, a two-node pilot study was conducted on two
+VMware virtual machines connected over a bridged local network. This pilot
+confirmed that the P2P TCP communication infrastructure worked correctly across
+real machines, and produced an unplanned server crash at Round 17 of the
+centralised IID experiment. That observation --- the server failing and the
+client being left with no recovery path --- directly motivated the deliberate
+fault injection experiments (Experiments 5-A and 5-B) in the main AWS study.
+
+The pilot results are not included in the primary comparison because the
+two-node setup is a degenerate case: at N=2, centralised FedAvg and
+decentralised gossip are mathematically identical, both computing the average
+of exactly two models. The topology makes no difference to accuracy at this
+scale.
+
+\section{The Six Experiments}
+
+Table~\ref{tab:experiments} lists all six experiments. Experiments 1--4 evaluate
+normal training behaviour under both data conditions. Experiments 5-A and 5-B
+evaluate fault behaviour through deliberate failure injection after Round 10.
+
+\begin{table}[ht]
+\centering
+\caption{Summary of all six experiments}
+\label{tab:experiments}
+\begin{tabular}{cllp{6cm}}
+\toprule
+\textbf{Exp} & \textbf{Architecture} & \textbf{Data} & \textbf{Purpose} \\
+\midrule
+1   & Centralised FedAvg   & IID         & Accuracy baseline \\
+2   & Centralised FedAvg   & Non-IID     & Effect of data heterogeneity \\
+3   & Decentralised Gossip & IID         & Compare accuracy against Exp 1 \\
+4   & Decentralised Gossip & Non-IID     & Compare accuracy against Exp 2 \\
+5-A & Decentralised Gossip & Non-IID     & Node 3 exits after Round 10 \\
+5-B & Centralised FedAvg   & Non-IID     & Server exits after Round 10 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For Experiments 5-A and 5-B, the failure was injected by manually terminating
+the process on the target instance after Round 10 completed. In 5-A, Node 3
+(one of the eight ring nodes) was killed. In 5-B, the server instance was
+killed. Both experiments used Non-IID data so that the failure effects could
+be observed against the more challenging baseline condition.
+
+The outcome of interest in the fault experiments was not just whether the
+remaining nodes continued --- but exactly how they continued: which nodes were
+affected, by how much, over how many rounds, and whether any secondary effects
+appeared beyond the direct neighbours of the failed node.
+
+\chapter{Results and Discussion}
+
+This chapter presents the results of all six experiments. Sections~\ref{sec:centralised-results}
+and~\ref{sec:decentralised-results} cover normal training under IID and Non-IID
+conditions for each architecture. Section~\ref{sec:architecture-comparison} compares
+both architectures directly. Section~\ref{sec:fault-results} presents the fault
+injection experiments.
+
+\section{Pilot Study: 2-VM VMware Results}
+\label{sec:pilot-results}
+ 
+Before the main AWS experiments, a two-node pilot study on VMware
+virtual machines validated the P2P communication infrastructure and
+produced the motivating server crash observation described in
+Chapter~5. The results are reported here briefly for completeness.
+They are \textbf{not} included in the primary comparison --- at N=2,
+centralised FedAvg and decentralised gossip are mathematically
+identical, so no architectural difference in accuracy is expected or
+observed.
+ 
+Both architectures were run on two Ubuntu VMs (192.168.221.128 and
+192.168.221.129) using VMware bridged networking. The same CNNCifar
+model, CIFAR-10 dataset (500 samples per node), and hyperparameters
+were used. Both ran for 30 rounds.
+ 
+\textbf{IID result:} Both architectures reached identical final
+accuracy of 36.68\% at Round 30 on both VMs. The decentralised
+system's per-round communication time averaged $\sim$2.0s versus
+$\sim$33s for centralised --- a 16$\times$ difference arising from
+eliminating the sequential server aggregation cycle.
+ 
+\textbf{Non-IID result ($\alpha = 0.1$):} Again identical final
+accuracy of 28.22\% on both VMs. Client drift was observed in both
+architectures --- Node 1 (VM2) was consistently hurt by aggregation
+in 27 of 30 rounds due to its skewed class distribution, confirming
+that drift is a property of data heterogeneity, not topology.
+ 
+\textbf{Motivating observation:} During the IID centralised experiment,
+an unplanned server broadcast failure at Round 17 caused Client 1
+(VM2) to permanently disconnect with no recovery. This live SPOF
+observation directly motivated Experiment 5-B, where the same failure
+mode was deliberately injected on the AWS infrastructure.
+ 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\textwidth]{IID_30Rounds_Decentralized_2VMs}
+\hfill
+\includegraphics[width=0.48\textwidth]{IID_30Rounds_Centralized_2VMs}
+\caption{2-VM pilot --- IID results. Left: decentralised (both VMs
+complete 30/30 rounds, 36.68\%). Right: centralised (VM2 disconnects
+at Round 17 due to server broadcast failure --- the motivating SPOF
+observation for Experiment 5-B).}
+\label{fig:pilot-iid}
+\end{figure}
+ 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\textwidth]{{NonIID_alpha0.1_30Rounds_Decentralized_2VMs}}
+\hfill
+\includegraphics[width=0.48\textwidth]{{NonIID_alpha0.1_30Rounds_Centralized_2VMs}}
+\caption{2-VM pilot --- Non-IID $\alpha{=}0.1$ results. Identical
+final accuracy (28.22\%) in both architectures. Client drift (DOWN
+trend for Node 1/Client 1) is identical in both, confirming
+implementation correctness.}
+\label{fig:pilot-noniid}
+\end{figure}
+
+% ============================================================
+\section{Centralised FedAvg: Experiments 1 and 2}
+\label{sec:centralised-results}
+% ============================================================
+
+\subsection{IID Results (Experiment 1)}
+
+Under IID conditions, centralised FedAvg converges rapidly and consistently.
+The global model crosses 50\% accuracy by Round 8 (51.50\%), reaches 58\% by
+Round 16, and peaks at \textbf{61.69\%} at Round 28. The final accuracy at
+Round 50 is 60.02\%, reflecting a mild post-peak drift of 1.67 percentage
+points as the model oscillates around a local optimum.
+
+Because data is uniformly distributed across all 7 clients, local training
+already produces models that generalise reasonably well. FedAvg provides a
+modest +1 to +4 pp boost per round. The local and aggregated accuracy curves
+track closely throughout training, confirming that IID clients are learning
+approximate global representations independently.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Centralized_IID}
+\caption{Centralized FedAvg --- IID experiment, early training (Round 2).
+All 7 clients upload to the server; server broadcasts the aggregated model.}
+\label{fig:centralised-iid-early}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Centralized_IID_4}
+\caption{Centralized FedAvg --- IID experiment, late training (Round 48).
+Convergence is stable with all clients reaching 60\%+ local accuracy.}
+\label{fig:centralised-iid-late}
+\end{figure}
+
+\subsection{Non-IID Results (Experiment 2)}
+
+Under Non-IID conditions (Dirichlet $\alpha = 0.5$), the peak global accuracy
+drops to \textbf{57.60\%} at Round 26 --- a reduction of 4.09 percentage points
+from the IID peak. The final accuracy at Round 50 is 56.58\%.
+
+The more striking effect is the gap between local and aggregated accuracy. In
+steady state, clients' local accuracy plateaus between 39--47\%, while the
+aggregated global model reaches 56--58\%. This persistent gap of 10--12 pp
+arises because each client only observes 2--4 dominant classes locally; the
+global model from FedAvg compensates for this by averaging across clients with
+complementary class distributions. The per-round FedAvg boost is correspondingly
+large --- ranging from +6 to +28 pp per round compared to +1 to +4 pp under IID.
+Client 3 at Round 23 illustrates this most starkly: its local accuracy was
+28.58\%, yet the aggregated model reached 57.39\% --- a +28.81 pp boost from
+global averaging alone.
+
+Table~\ref{tab:fedavg-boost} quantifies the FedAvg boost for a
+representative Non-IID client (Client~1) at selected rounds,
+illustrating how global aggregation compensates for local data
+specialisation.
+ 
+\begin{table}[H]
+\centering
+\caption{Local vs.\ aggregated accuracy for Client~1 under Non-IID
+(Exp 2). FedAvg boost = aggregated $-$ local.}
+\label{tab:fedavg-boost}
+\begin{tabular}{cccc}
+\toprule
+\textbf{Round} & \textbf{Local Acc} & \textbf{Aggregated Acc}
+& \textbf{FedAvg Boost} \\
+\midrule
+1  & 10.24\% & 14.89\% & $+$4.65~pp \\
+5  & 29.47\% & 41.91\% & $+$12.44~pp \\
+10 & 34.16\% & 51.20\% & $+$17.04~pp \\
+20 & 40.29\% & 56.23\% & $+$15.94~pp \\
+30 & 43.11\% & 57.08\% & $+$13.97~pp \\
+50 & 44.88\% & 56.58\% & $+$11.70~pp \\
+\bottomrule
+\end{tabular}
+\end{table}
+ 
+The boost is largest in the middle rounds (10--20) where the global
+model has already converged significantly while local training remains
+constrained by the client's narrow class distribution. Even at Round
+50, FedAvg contributes a persistent $+$11.70~pp over what the client
+could achieve locally --- confirming that global aggregation is
+indispensable under Non-IID data.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Centralized_NonIID}
+\caption{Centralized FedAvg --- Non-IID experiment, early training (Round 4).
+Large per-round FedAvg boosts visible as clients' local accuracy is far below
+the aggregated global accuracy.}
+\label{fig:centralised-noniid-early}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Centralized_NonIID_4}
+\caption{Centralized FedAvg --- Non-IID experiment, late training (Round 48).
+Aggregated accuracy stabilises around 56--58\% despite local accuracy remaining
+well below that range.}
+\label{fig:centralised-noniid-late}
+\end{figure}
+
+Table~\ref{tab:centralised-milestones} summarises the convergence milestones
+for both centralised experiments.
+
+\begin{table}[H]
+\centering
+\caption{Convergence milestones --- Centralised FedAvg}
+\label{tab:centralised-milestones}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Milestone} & \textbf{IID Round} & \textbf{IID Acc} &
+\textbf{Non-IID Round} & \textbf{Non-IID Acc} \\
+\midrule
+Crosses 40\% & R4  & 42.31\% & R5  & 41.91\% \\
+Crosses 50\% & R8  & 51.50\% & R10 & 51.20\% \\
+Crosses 55\% & R13 & 57.73\% & R15 & 55.02\% \\
+Peak         & R28 & 61.69\% & R26 & 57.60\% \\
+Final (R50)  & --- & 60.02\% & --- & 56.58\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:centralised-convergence} plots the global accuracy
+per round for both centralised experiments across all 50 rounds.
+ 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.92\textwidth,
+  height=7cm,
+  xlabel={Round},
+  ylabel={Global Accuracy (\%)},
+  xmin=1, xmax=50,
+  ymin=10, ymax=68,
+  xtick={1,5,10,15,20,25,30,35,40,45,50},
+  ytick={10,20,30,40,50,60,70},
+  grid=both,
+  grid style={line width=0.3pt, draw=gray!30},
+  legend pos=south east,
+  legend style={font=\small},
+  tick label style={font=\small},
+  label style={font=\small},
+]
+% Centralised IID
+\addplot[color=blue, thick, mark=none] coordinates {
+  (1,15.55)(2,32.19)(3,38.01)(4,42.31)(5,45.53)
+  (6,47.28)(7,49.75)(8,51.50)(9,52.49)(10,54.57)
+  (11,56.00)(12,57.42)(13,57.73)(14,58.76)(15,59.42)
+  (16,60.20)(17,60.80)(18,60.70)(19,61.30)(20,61.18)
+  (21,61.14)(22,61.39)(23,61.13)(24,61.30)(25,61.26)
+  (26,61.23)(27,60.97)(28,61.69)(29,61.21)(30,60.83)
+  (35,60.42)(40,60.74)(45,60.27)(50,60.02)
+};
+\addlegendentry{Centralised IID}
+ 
+% Centralised Non-IID
+\addplot[color=red, thick, dashed, mark=none] coordinates {
+  (1,14.89)(2,26.42)(3,31.45)(4,37.76)(5,41.91)
+  (6,44.37)(7,46.64)(8,48.23)(9,49.08)(10,51.20)
+  (11,52.17)(12,52.56)(13,53.76)(14,54.34)(15,55.02)
+  (16,55.06)(17,55.48)(18,55.59)(19,56.57)(20,56.23)
+  (21,56.53)(22,57.24)(23,57.39)(24,57.42)(25,56.29)
+  (26,57.60)(27,56.69)(28,57.27)(29,57.07)(30,57.08)
+  (35,56.67)(40,57.12)(45,56.59)(50,56.58)
+};
+\addlegendentry{Centralised Non-IID ($\alpha{=}0.5$)}
+ 
+% Peak markers
+\addplot[color=blue, only marks, mark=*, mark size=3pt]
+  coordinates {(28,61.69)};
+\addplot[color=red, only marks, mark=square*, mark size=3pt]
+  coordinates {(26,57.60)};
+ 
+\end{axis}
+\end{tikzpicture}
+\caption{Global accuracy vs.\ round for Experiments 1 and 2 (Centralised
+FedAvg). IID peaks at 61.69\% (Round 28); Non-IID peaks at 57.60\%
+(Round 26). The gap stabilises at 3.4--5.1~pp from Round 12 onward.
+Filled markers indicate peak accuracy points.}
+\label{fig:centralised-convergence}
+\end{figure}
+
+Both experiments ran for approximately 22 minutes and transferred an identical
+171,726--171,734 KB of data over 50 rounds. The data distribution has no impact
+on communication cost in centralised FedAvg, since model size is fixed regardless
+of local class distribution.
+
+A structural observation from both experiments: every client's upload phase
+blocks until all 7 clients have connected, and every download phase blocks until
+the server broadcasts. During the 5-second inter-round wait, all 7 clients log
+a failed connection attempt before successfully reconnecting. This synchronous
+server dependency is the foundation of the SPOF risk demonstrated in
+Experiment 5-B.
+
+% ============================================================
+\section{Decentralised Gossip FL: Experiments 3 and 4}
+\label{sec:decentralised-results}
+% ============================================================
+
+\subsection{IID Results (Experiment 3)}
+
+Under IID conditions, decentralised ring gossip converges to an average final
+accuracy of \textbf{55.98\%} across 8 nodes (range: 55.37--56.79\%). All 8
+nodes self-coordinated without any central server and completed 50/50 rounds.
+No orchestration service or shared coordinator was involved.
+
+The gossip blend provides a consistent +2 to +4 pp boost over each node's local
+training accuracy per round. The spread in final accuracy across nodes is only
+\textbf{1.42 pp} --- approaching but not reaching the perfect uniformity
+guaranteed by centralised FedAvg, where all clients receive the same
+server-broadcast model each round.
+
+Occasional negative blend events were observed --- rounds where blending with
+two neighbours briefly decreased accuracy (Round 3: $-$2.99 pp). These are
+short-lived and the model recovers within 1--2 rounds. They occur when
+neighbours' models are weakly trained early in the experiment and carry noise
+rather than complementary knowledge. This higher round-to-round variance
+compared to FedAvg is an inherent characteristic of averaging within a
+small 2-neighbour neighbourhood.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Decentralized_IID}
+\caption{Decentralised gossip --- IID experiment, Round 3. Each node pushes
+its model to both ring neighbours and blends three models (own + left + right).}
+\label{fig:decentralised-iid-early}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Decentralized_IID_5}
+\caption{Decentralised gossip --- IID experiment, Round 46. Nodes converge
+within a tight accuracy band with no central coordinator.}
+\label{fig:decentralised-iid-late}
+\end{figure}
+
+\subsection{Non-IID Results (Experiment 4)}
+
+Under Non-IID conditions, average final accuracy drops to \textbf{49.49\%}
+(range: 48.00--51.33\%) --- a reduction of \textbf{6.49 pp} from the IID case.
+This degradation is substantially larger than the 3.44 pp IID-to-Non-IID gap
+observed in centralised FedAvg.
+
+The reason is the smaller aggregation pool. In each round, a gossip node blends
+only with its 2 immediate ring neighbours. If those neighbours carry correlated
+class imbalances --- as is likely under Non-IID when nearby ring positions share
+similar data characteristics --- the blend offers limited complementary knowledge.
+FedAvg, by contrast, aggregates all 7 clients every round and sees the full
+diversity of class distributions regardless of data heterogeneity.
+
+The node accuracy spread under Non-IID is \textbf{3.33 pp} at Round 50 ---
+more than double the 1.42 pp spread under IID. Unlike centralised FL where all
+clients always hold the same model, gossip nodes develop slightly different models
+that reflect their local neighbourhood. Under Non-IID, this divergence is
+amplified. This is not a bug but an inherent architectural property: gossip-based
+FL does not guarantee model uniformity across nodes.
+
+Despite this, the gossip blend remains valuable. Per-round blending boosts each
+node's accuracy by +7 to +12 pp over its local model under Non-IID --- 3 to 5
+times the boost observed under IID. The local model alone is simply too
+specialised to reach acceptable accuracy; neighbourhood knowledge is essential.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Decentralized_NonIID}
+\caption{Decentralised gossip --- Non-IID experiment, Round 8. PUSH retry
+attempts visible as some nodes take longer to synchronise with neighbours
+whose training speed differs.}
+\label{fig:decentralised-noniid-early}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Decentralized_NonIID_5}
+\caption{Decentralised gossip --- Non-IID experiment, Round 47. Accuracy
+spread across nodes is wider than under IID, reflecting the limited
+complementary knowledge in a 2-neighbour ring under heterogeneous data.}
+\label{fig:decentralised-noniid-late}
+\end{figure}
+
+Table~\ref{tab:decentralised-nodes} shows per-node final accuracy for both
+decentralised experiments.
+
+\begin{table}[H]
+\centering
+\caption{Per-node final accuracy --- Decentralised Gossip (Round 50)}
+\label{tab:decentralised-nodes}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Node} & \textbf{IID Final Acc} & \textbf{Non-IID Final Acc} \\
+\midrule
+Node 0 & 56.56\% & 48.93\% \\
+Node 1 & 55.89\% & 51.33\% \\
+Node 2 & 55.71\% & 50.11\% \\
+Node 3 & 56.34\% & 48.49\% \\
+Node 4 & 55.80\% & 49.85\% \\
+Node 5 & 55.64\% & 48.00\% \\
+Node 6 & 55.37\% & 49.60\% \\
+Node 7 & 56.79\% & 50.56\% \\
+\midrule
+\textbf{Average} & \textbf{55.98\%} & \textbf{49.49\%} \\
+\textbf{Spread}  & \textbf{1.42 pp} & \textbf{3.33 pp} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:decentralised-convergence} plots the post-blend
+accuracy per round for Node~0 (representative) in both decentralised
+experiments. Node~0 is representative of the network average ---
+its final accuracy (56.17\% IID, 49.16\% Non-IID) is close to the
+8-node averages (55.98\% and 49.49\% respectively).
+ 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.92\textwidth,
+  height=7cm,
+  xlabel={Round},
+  ylabel={Post-Blend Accuracy (\%)},
+  xmin=1, xmax=50,
+  ymin=10, ymax=65,
+  xtick={1,5,10,15,20,25,30,35,40,45,50},
+  ytick={10,20,30,40,50,60,70},
+  grid=both,
+  grid style={line width=0.3pt, draw=gray!30},
+  legend pos=south east,
+  legend style={font=\small},
+  tick label style={font=\small},
+  label style={font=\small},
+]
+% Decentralised IID (Node 0 post-blend)
+\addplot[color=blue!70!green, thick, mark=none] coordinates {
+  (1,22.57)(2,35.35)(3,37.49)(4,42.50)(5,45.80)
+  (6,47.47)(7,49.92)(8,50.99)(9,52.67)(10,53.57)
+  (11,54.33)(12,54.96)(13,55.91)(14,55.96)(15,56.26)
+  (16,57.01)(17,56.76)(18,56.49)(19,56.66)(20,56.81)
+  (21,56.71)(22,57.07)(23,56.92)(24,56.84)(25,56.98)
+  (26,56.80)(27,56.77)(28,56.55)(29,57.00)(30,56.43)
+  (35,57.03)(39,57.27)(40,57.18)(45,57.10)(50,56.17)
+};
+\addlegendentry{Decentralised IID (Node 0)}
+ 
+% Decentralised Non-IID (Node 0 post-blend)
+\addplot[color=orange!80!red, thick, dashed, mark=none] coordinates {
+  (1,15.31)(2,23.75)(3,30.29)(4,33.44)(5,36.29)
+  (6,42.04)(7,43.76)(8,44.26)(9,46.94)(10,46.68)
+  (11,48.42)(12,48.35)(13,49.16)(14,49.83)(15,51.32)
+  (16,51.56)(17,51.76)(18,51.59)(19,51.35)(20,50.43)
+  (21,51.22)(22,51.66)(23,51.51)(24,51.78)(25,51.44)
+  (26,51.55)(27,51.24)(28,51.18)(29,52.14)(30,52.03)
+  (35,51.48)(40,51.77)(45,51.73)(50,49.16)
+};
+\addlegendentry{Decentralised Non-IID ($\alpha{=}0.5$, Node 0)}
+ 
+\end{axis}
+\end{tikzpicture}
+\caption{Post-blend accuracy vs.\ round for Experiments 3 and 4
+(Decentralised Gossip, Node~0). IID converges to $\sim$57\% and
+holds steadily from Round~15. Non-IID plateaus at $\sim$51--52\%
+from Round~15, never crossing 53\% sustainably. The gap between
+IID and Non-IID ($\sim$7~pp) is wider than in centralised FL
+($\sim$3.5~pp), confirming gossip's greater sensitivity to data
+heterogeneity.}
+\label{fig:decentralised-convergence}
+\end{figure}
+
+Average communication time per round in the decentralised setup was
+\textbf{$\sim$24--26 seconds}, compared to \textbf{$\sim$3.9 seconds} in
+the centralised setup. This difference is not due to data volume --- each node
+transfers approximately 981 KB per round (490.6 KB to each neighbour), roughly
+2$\times$ the per-client data in centralised FL. The higher time comes from
+waiting for both neighbours to finish their local training before the exchange
+can begin. In centralised FL, the server waits for all clients; in gossip FL,
+each node waits for its two neighbours. Total experiment wall time was
+approximately 40 minutes, compared to 22.5 minutes for the centralised
+equivalent.
+
+% ============================================================
+\section{Architecture Comparison: Experiments 1--4}
+\label{sec:architecture-comparison}
+% ============================================================
+
+Table~\ref{tab:arch-comparison} directly compares the key results from
+Experiments 1--4.
+
+\begin{table}[H]
+\centering
+\caption{Architecture comparison --- normal operation results}
+\label{tab:arch-comparison}
+\small
+\begin{tabular}{lp{2cm}p{2.2cm}p{1.9cm}p{2.2cm}}
+\toprule
+\textbf{Metric}
+  & \textbf{Centralised IID}
+  & \textbf{Centralised Non-IID}
+  & \textbf{Gossip IID}
+  & \textbf{Gossip Non-IID} \\
+\midrule
+Peak accuracy    & 61.69\% & 57.60\% & 57.48\% & 53.44\% \\
+Final accuracy   & 60.02\% & 56.58\% & 55.98\% & 49.49\% \\
+Rounds to 50\%   & R8      & R10     & R8      & R15     \\
+Accuracy spread  & 0 pp    & 0 pp    & 1.42 pp & 3.33 pp \\
+Avg comm/round   & $\sim$3.9s & $\sim$3.9s & $\sim$25s & $\sim$24s \\
+Nodes completed  & 7/7     & 7/7     & 8/8     & 8/8     \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:fault-node-accuracy} shows how Node~2 and Node~4's
+accuracy evolved across all 50 rounds in Experiment~5-A, with the
+three distinct phases annotated.
+ 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.92\textwidth,
+  height=7cm,
+  xlabel={Round},
+  ylabel={Post-Blend Accuracy (\%)},
+  xmin=1, xmax=50,
+  ymin=10, ymax=58,
+  xtick={1,5,10,15,20,25,30,35,40,45,50},
+  ytick={10,20,30,40,50,60},
+  grid=both,
+  grid style={line width=0.3pt, draw=gray!30},
+  legend pos=north west,
+  legend style={font=\small},
+  tick label style={font=\small},
+  label style={font=\small},
+]
+ 
+% Node 2 accuracy (3 phases)
+\addplot[color=red, thick, mark=none] coordinates {
+  (1,13.14)(5,34.40)(9,44.19)(10,45.90)
+  (11,45.46)(13,51.50)(20,51.11)(30,50.72)(37,50.68)
+  (38,43.93)(45,43.70)(50,43.70)
+};
+\addlegendentry{Node 2 (left neighbour of Node 3)}
+ 
+% Node 4 accuracy
+\addplot[color=orange, thick, dashed, mark=none] coordinates {
+  (1,19.15)(5,25.44)(9,36.21)(10,38.42)
+  (11,38.55)(15,44.29)(19,49.92)(30,47.83)(37,47.21)
+  (38,44.10)(41,42.15)(45,41.36)(50,40.72)
+};
+\addlegendentry{Node 4 (right neighbour of Node 3)}
+ 
+% Phase boundary lines
+\draw[dashed, gray, thick] (axis cs:10,10) -- (axis cs:10,58)
+  node[above, font=\scriptsize, text=gray] {Node 3 fails};
+\draw[dashed, gray] (axis cs:38,10) -- (axis cs:38,58)
+  node[above, font=\scriptsize, text=gray] {N2 isolated};
+\draw[dashed, gray] (axis cs:41,10) -- (axis cs:41,58)
+  node[above, font=\scriptsize, text=gray] {N4 isolated};
+ 
+% Phase labels
+\node[font=\scriptsize, text=gray] at (axis cs:5,12) {Phase 1};
+\node[font=\scriptsize, text=gray] at (axis cs:24,12) {Phase 2};
+\node[font=\scriptsize, text=gray] at (axis cs:44,12) {Phase 3};
+ 
+\end{axis}
+\end{tikzpicture}
+\caption{Per-round accuracy of Nodes~2 and 4 (direct neighbours of
+failed Node~3) in Experiment~5-A. Phase~1 (R1--10): normal operation.
+Phase~2 (R11--37/41): single surviving neighbour, accuracy held but
+comm time inflated. Phase~3 (R38/41--50): complete isolation, accuracy
+frozen at local training output ($\sim$43--44\%).}
+\label{fig:fault-node-accuracy}
+\end{figure}
+
+The accuracy gap between centralised FedAvg and decentralised gossip is
+\textbf{4.21 pp under IID} and \textbf{7.09 pp under Non-IID} (comparing
+final accuracy). The gap is larger under Non-IID because gossip's small
+neighbourhood is less effective than FedAvg's full global aggregation at
+overcoming class imbalance. This is the quantified accuracy cost of
+eliminating the central server.
+
+Communication overhead is higher in gossip --- each node waits for its
+neighbours to finish training, making round duration inherently tied to
+neighbour training speed. In centralised FL, the server aggregates instantly
+(0.044 seconds for FedAvg on 7 models) and communication cost is bounded by
+network speed. In gossip FL, communication cost is bounded by training speed.
+
+% ============================================================
+\section{Fault Injection: Experiments 5-A and 5-B}
+\label{sec:fault-results}
+% ============================================================
+
+Both fault experiments used Non-IID data and identical model/hardware setups.
+In Experiment 5-A, Node 3 was killed after completing Round 10. In Experiment
+5-B, the server was killed after completing Round 9's broadcast. The outcome
+in each case was fundamentally different.
+
+\subsection{Experiment 5-B: SPOF in Centralised FL}
+
+The server exited at 19:32:26 after broadcasting the Round 9 aggregated model
+to all 7 clients. Within 14 seconds, all 7 clients had completed their Round 10
+local training and began attempting to upload to the now-dead server.
+
+Each client retried the upload every 3 seconds for up to 300 seconds. After
+80 upload attempts over 4 minutes and 14 seconds, all 7 clients simultaneously
+logged \texttt{CRITICAL --- SERVER UNREACHABLE --- SPOF CONFIRMED} within a
+4-second window (19:36:39--43). The system halted permanently at 9/50 rounds
+with a final accuracy of \textbf{49.07\%}. No client could continue, recover,
+or route around the failure.
+
+The potential accuracy the system would have reached with a healthy server ---
+based on Experiment 2 --- was 57.60\%. The SPOF caused a permanent accuracy
+loss of approximately \textbf{8.5 pp} and 41 rounds of training time with no
+recovery path.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Centralized_SPOF}
+\caption{Centralised SPOF --- Round 5, normal operation just before the
+server failure at Round 10.}
+\label{fig:centralised-spof-normal}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Centralized_SPOF_5}
+\caption{AWS EC2 infrastructure showing the 4 terminal windows from the
+centralised SPOF experiment. After the server exits, all client terminals
+show repeated connection refused errors.}
+\label{fig:centralised-spof-infra}
+\end{figure}
+
+\subsection{Experiment 5-A: Fault Tolerance in Decentralised FL}
+
+Node 3 completed its Round 10 blend (post-blend accuracy: 37.26\%) and exited
+at 17:46:59. Its direct ring neighbours --- Node 2 on the left and Node 4 on
+the right --- detected the failure via push timeout at approximately 17:48:45,
+about 1 minute 46 seconds after the exit. Both logged \texttt{PUSH FAIL
+$\rightarrow$ Node-3 $|$ Neighbor may be down} and continued training.
+
+All 7 remaining nodes completed 50/50 rounds. The system never halted.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Decentralized_FaultTolerance}
+\caption{Decentralised fault tolerance --- Node 3's neighbours (Nodes 2 and 4)
+showing PUSH retry attempts after Node 3 exits. Both continue training with
+their surviving neighbour.}
+\label{fig:decentralised-fault-early}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{Decentralized_FaultTolerance_5}
+\caption{Decentralised fault tolerance --- Round 46. All surviving nodes
+continue making progress, with Nodes 2 and 4 showing reduced accuracy due
+to limited blending after Node 3's exit.}
+\label{fig:decentralised-fault-late}
+\end{figure}
+
+\subsection{The Cascading Timing-Drift Effect}
+
+An unexpected finding emerged from the fault experiment. Because the synchronous
+gossip protocol requires each node to wait for both neighbours to push their
+models, Node 3's absence caused Nodes 2 and 4 to wait for the full 90-second
+push retry timeout before proceeding. This inflated their round duration from
+approximately 37 seconds to approximately 130 seconds per round.
+
+This timing inflation had a cascading effect. When Nodes 2 and 4 consistently
+ran 90 seconds late per round, their surviving neighbours --- Node 1 (adjacent
+to Node 2) and Node 5 (adjacent to Node 4) --- began timing out on their push
+attempts to Nodes 2 and 4 as well. By Round 38, Node 2 had lost connectivity
+to both its remaining neighbours and began training in complete isolation. Node
+4 followed at Round 41.
+
+The timing disruption propagated outward from the failed node with measurable
+distance decay:
+
+\begin{table}[H]
+\centering
+\caption{Communication time inflation by ring distance from failed Node 3}
+\label{tab:timing-drift}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Distance from Node 3} & \textbf{Avg comm time} & \textbf{Inflation} \\
+\midrule
+1 hop (Nodes 2, 4)    & $\sim$96--130s & +303\% \\
+2 hops (Nodes 1, 5)   & $\sim$65s      & +172\% \\
+3 hops (Nodes 0, 6)   & $\sim$51s      & +114\% \\
+4 hops (Node 7)       & $\sim$49s      & +104\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The accuracy impact was localised to the two direct neighbours. Nodes 2 and 4
+finished with final accuracies of 43.70\% and 40.72\% respectively --- drops
+of 7.63 pp and 9.13 pp compared to their baselines in Experiment 4. All other
+5 surviving nodes finished within $\pm$2 pp of their normal Non-IID baselines.
+
+This cascading isolation behaviour --- where a single failed node eventually
+causes its direct neighbours to lose \textit{all} connectivity through secondary
+timing effects --- was not predicted by theoretical gossip FL models. It is a
+real-world TCP timeout behaviour that only becomes visible on actual distributed
+infrastructure.
+
+\subsection{Direct Comparison of Fault Outcomes}
+
+Table~\ref{tab:fault-comparison} summarises the direct comparison between
+Experiments 5-A and 5-B.
+
+\begin{table}[H]
+\centering
+\caption{Fault experiment outcomes: decentralised vs centralised}
+\label{tab:fault-comparison}
+\begin{tabular}{lll}
+\toprule
+\textbf{Metric} & \textbf{Exp 5-A (Decentralised)} & \textbf{Exp 5-B (Centralised)} \\
+\midrule
+Who fails            & Node 3 (1 of 8)          & Server (sole coordinator) \\
+Nodes that continue  & \textbf{7/8 --- 50/50 rounds} & \textbf{0/7 --- stuck at R9} \\
+System halt?         & \textbf{No}              & \textbf{Yes, permanent} \\
+Final accuracy       & 48.68\% avg (7 nodes)    & 49.07\% (frozen) \\
+Accuracy lost        & 7.6--9.1 pp (2 nodes)    & $\sim$8.5 pp (all 7 nodes) \\
+Detection time       & $\sim$90s                & $\sim$4 min 14s (irrelevant) \\
+Recovery possible?   & Yes --- partial           & No \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The comparison is stark. In centralised FL, 1 server failure equals 7 client
+failures and 100\% system halt. In decentralised ring gossip, 1 node failure
+equals 2 degraded neighbours and 5 unaffected nodes, with 0\% system halt.
+The 2 directly affected nodes lost accuracy but never stopped training. In
+centralised FL, all 7 clients lost 82\% of their planned training budget
+instantly and permanently.
+
+\chapter{Conclusion}
+
+\section{Summary of Work}
+
+This thesis set out to answer a question that the federated learning literature
+had left unanswered: what actually happens when a server or node fails during
+training on real distributed infrastructure, and how much accuracy does a
+decentralised architecture sacrifice to eliminate that risk?
+
+To answer this, both a centralised FedAvg system and a decentralised synchronous
+ring gossip FL system were built from scratch in Python and PyTorch, deployed on
+8 real AWS EC2 instances, and evaluated across six controlled experiments covering
+IID and Non-IID data distributions, normal operation, and live failure injection.
+An earlier two-node pilot on VMware VMs confirmed the P2P communication
+infrastructure and produced the unplanned server crash at Round 17 that directly
+motivated the full fault injection experiments.
+
+\section{Key Findings}
+
+\textbf{The accuracy cost of decentralisation is small and consistent.}
+Decentralised gossip FL reached within 4.21 pp of centralised FedAvg under IID
+conditions (55.98\% vs 60.02\% final accuracy) and within 7.09 pp under Non-IID
+(49.49\% vs 56.58\%). Both architectures converged to 50\% accuracy within a
+similar number of rounds under IID. The accuracy gap is real but modest, and
+represents the measurable price of eliminating the central server entirely.
+
+\textbf{Gossip FL is more sensitive to Non-IID data than FedAvg.}
+The IID-to-Non-IID accuracy drop was 6.49 pp in the decentralised setting versus
+3.44 pp in the centralised setting. This is because each gossip node blends with
+only 2 immediate neighbours per round, making it vulnerable to correlated class
+imbalances in its local neighbourhood. FedAvg aggregates all 7 clients every
+round and sees the full diversity of class distributions, making it more robust
+to data heterogeneity.
+
+\textbf{The SPOF is real and total.}
+When the server was killed after Round 9, all 7 clients halted permanently within
+4 minutes and 14 seconds. After 80 upload attempts each, every client logged
+\texttt{CRITICAL --- SERVER UNREACHABLE}. The system froze at 49.07\% accuracy
+with 41 rounds of training permanently lost. No client could continue or recover
+without a manual server restart.
+
+\textbf{Decentralised FL survives node failure.}
+When Node 3 was killed after Round 10, all 7 remaining nodes completed all 50
+rounds. The system never halted. Direct neighbours Node 2 and Node 4 saw accuracy
+drops of 7.63 pp and 9.13 pp respectively, but continued training throughout.
+All other 5 nodes finished within $\pm$2 pp of their normal baselines.
+
+\textbf{A previously undescribed cascading failure behaviour was discovered.}
+When Node 3 failed, the 90-second TCP push retry timeout at its direct neighbours
+inflated their round duration from $\sim$37 seconds to $\sim$130 seconds. This
+timing drift cascaded outward: Nodes 2 and 4 eventually lost synchronisation with
+their surviving neighbours as well, becoming fully isolated by Rounds 38 and 41
+respectively. The timing inflation decayed measurably with ring distance but was
+still detectable 4 hops away. This emergent behaviour --- where a single node
+failure causes secondary neighbour isolation through TCP timeout accumulation ---
+is not predicted by any existing theoretical gossip FL model.
+
+\section{Limitations}
+
+\textbf{Scale.} All experiments used 8 nodes. The behaviour of ring gossip at
+larger scales --- 16, 32, or 64 nodes --- was not studied. Knowledge propagation
+time grows with ring size, and the cascading timing-drift effect may behave
+differently in larger rings.
+
+\textbf{Synchronous protocol only.} Both architectures used a synchronous
+protocol where every node waits for its partners before proceeding. Asynchronous
+FL --- where nodes train and exchange independently --- is a different research
+track with its own convergence and fault tolerance properties. This thesis does
+not address it.
+
+\textbf{Fixed ring topology.} Each node always communicated with the same two
+neighbours. Dynamic gossip topologies, where neighbourhood changes each round,
+may propagate knowledge faster and be more resilient to failures. This was
+explicitly out of scope.
+
+\textbf{Single dataset and model.} All experiments used CIFAR-10 with a simple
+CNN. Whether the findings generalise to larger models, different datasets, or more
+complex architectures is an open question.
+
+\textbf{No Byzantine fault tolerance.} The experiments tested clean node exits,
+not malicious or corrupted nodes. Byzantine fault tolerance in ring gossip is a
+separate and significant research problem.
+
+\section{Future Work}
+
+Several directions follow naturally from this work.
+
+\textbf{Adaptive timeout backoff.} The cascading timing-drift effect was caused
+by a fixed 90-second push retry timeout. A simple improvement would be to detect
+consistent push failures after 2--3 attempts and reduce the wait time accordingly,
+preventing secondary isolation of direct neighbours.
+
+\textbf{Scaling experiments.} Running the same controlled comparison at 16, 32,
+and 64 nodes would characterise how the accuracy gap and fault tolerance behaviour
+scale with ring size. This is the most direct extension of this work.
+
+\textbf{Asynchronous gossip FL.} Porting the ring gossip system to an
+asynchronous protocol would allow comparison of synchronous and asynchronous
+decentralised FL under the same fault injection conditions.
+
+\textbf{Dynamic topology.} Replacing the fixed ring with random or adaptive
+gossip --- where each node selects different neighbours each round --- would test
+whether faster knowledge propagation reduces the Non-IID sensitivity gap.
+
+\textbf{Cross-network deployment.} Extending the experiments beyond a single
+AWS VPC to nodes in different regions or different cloud providers would introduce
+real network variability and test the architecture under conditions closer to
+actual federated deployments.
+
+\addcontentsline{toc}{chapter}{REFERENCES}
+
+\begin{thebibliography}{15}
+
+\bibitem{mcmahan2017}
+McMahan, B., Moore, E., Ramage, D., Hampson, S., \& y Arcas, B. A. (2017).
+Communication-efficient learning of deep networks from decentralized data.
+In \textit{Proceedings of the 20th International Conference on Artificial
+Intelligence and Statistics} (pp. 1273--1282).
+
+\bibitem{li2020}
+Li, T., Sahu, A. K., Zaheer, M., Sanjabi, M., Talwalkar, A., \& Smith, V.
+(2020). Federated optimization in heterogeneous networks.
+\textit{Proceedings of Machine Learning and Systems}, 2, 429--450.
+
+\bibitem{bonawitz2019}
+Bonawitz, K., Eichner, H., Grieskamp, W., Huba, D., Ingerman, A., Ivanov,
+V., Kiddon, C., Konečný, J., Mazzocchi, S., McMahan, H. B., Van Overveldt,
+T., Petrou, D., Ramage, D., \& Roselander, J. (2019). Towards federated
+learning at scale: System design. \textit{Proceedings of Machine Learning
+and Systems}, 1, 374--388.
+
+\bibitem{kairouz2021}
+Kairouz, P., McMahan, H. B., Avent, B., Bellet, A., Bennis, M., et al.
+(2021). Advances and open problems in federated learning.
+\textit{Foundations and Trends in Machine Learning}, 14(1--2), 1--210.
+
+\bibitem{lian2017}
+Lian, X., Zhang, C., Zhang, H., Hsieh, C.-J., Zhang, W., \& Liu, J. (2017).
+Can decentralized algorithms outperform centralized algorithms? A case for
+decentralized stochastic gradient descent. In \textit{Advances in Neural
+Information Processing Systems} (NeurIPS), 30.
+
+\bibitem{lalitha2019}
+Lalitha, A., Shekhar, S., Javidi, T., \& Koushanfar, F. (2019). Fully
+decentralized federated learning. In \textit{NeurIPS Workshop on Bayesian
+Deep Learning}.
+
+\bibitem{boyd2006}
+Boyd, S., Ghosh, A., Prabhakar, B., \& Shah, D. (2006). Randomized gossip
+algorithms. \textit{IEEE Transactions on Information Theory}, 52(6),
+2508--2530.
+
+\bibitem{beltransurvey2023}
+Beltran, E. T. M., et al. (2023). Decentralized federated learning:
+Fundamentals, state-of-the-art, frameworks, trends, and challenges.
+\textit{IEEE Communications Surveys \& Tutorials}, 25(4), 2983--3013.
+
+\bibitem{roy2019}
+Roy, A. G., Siddiqui, S., Pölsterl, S., Navab, N., \& Wachinger, C. (2019).
+BrainTorrent: A peer-to-peer environment for decentralized federated
+learning. \textit{arXiv preprint arXiv:1905.06731}.
+
+\bibitem{xu2021health}
+Xu, J., \& Wang, F. (2021). Federated learning for healthcare informatics.
+\textit{Journal of Healthcare Informatics Research}, 5(1), 1--19.
+
+\bibitem{li2021}
+Li, Q., Wen, Z., Wu, Z., Hu, S., Wang, N., Li, Y., Liu, X., \& He, B.
+(2021). A survey on federated learning systems: Vision, hype and reality
+for data privacy and protection. \textit{IEEE Transactions on Knowledge
+and Data Engineering}.
+
+\bibitem{lamport1982}
+Lamport, L., Shostak, R., \& Pease, M. (1982). The Byzantine generals
+problem. \textit{ACM Transactions on Programming Languages and Systems},
+4(3), 382--401.
+
+\bibitem{castro1999}
+Castro, M., \& Liskov, B. (1999). Practical Byzantine fault tolerance.
+\textit{ACM SIGOPS Operating Systems Review}, 33(5), 173--186.
+
+\end{thebibliography}
+
+\end{document}

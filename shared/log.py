@@ -1,6 +1,15 @@
 """
 shared/log.py  --  Logging utilities
                    All output formatting lives here. Import this everywhere.
+
+Log structure:
+    logs/YYYY_MM_DD/
+    ├── centralized_iid/        server.log, client_1.log ... client_7.log
+    ├── centralized_noniid/     server.log, client_1.log ... client_7.log
+    ├── decentralized_iid/      node_0.log ... node_7.log
+    ├── decentralized_noniid/   node_0.log ... node_7.log
+    ├── centralized_spof/       server.log, client_1.log ... client_7.log
+    └── decentralized_fault/    node_0.log ... node_7.log
 """
 
 import os
@@ -65,17 +74,23 @@ class _Tee:
 
 def setup_file_logging(exp_label, node_label):
     """
-    Create  logs/<exp_label>_<YYYYMMDD_HHMM>/<node_label>.log
+    Create  logs/YYYY_MM_DD/<exp_label>/<node_label>.log
     and redirect sys.stdout so all print() calls go to both
     the terminal and the log file automatically.
 
-    Timestamp is rounded to the minute so all nodes started
-    within the same experiment run share the same folder name.
+    Structure:
+      logs/2026_05_07/centralized_iid/server.log
+      logs/2026_05_07/centralized_iid/client_1.log
+      logs/2026_05_07/decentralized_iid/node_0.log
+      ...
+
+    Re-running the same experiment on the same day overwrites
+    the previous file so only the latest run is kept.
 
     Returns the full path of the log file created.
     """
-    ts_dir   = time.strftime('%Y%m%d_%H%M')
-    log_dir  = os.path.join('logs', f'{exp_label}_{ts_dir}')
+    date_dir = time.strftime('%Y_%m_%d')
+    log_dir  = os.path.join('logs', date_dir, exp_label)
     os.makedirs(log_dir, exist_ok=True)
     log_path = os.path.join(log_dir, f'{node_label}.log')
 

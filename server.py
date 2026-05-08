@@ -22,6 +22,22 @@ from shared.train import fedavg
 
 FAIL_ROUND = 10
 
+# IP → Node ID lookup for readable log lines
+NODE_ID_MAP = {
+    "172.31.21.108": 0,
+    "172.31.31.28":  1,
+    "172.31.24.251": 2,
+    "172.31.26.122": 3,
+    "172.31.24.136": 4,
+    "172.31.22.247": 5,
+    "172.31.20.96":  6,
+    "172.31.18.64":  7,
+}
+
+def node_label(ip):
+    nid = NODE_ID_MAP.get(ip, "?")
+    return f"Node {nid} ({ip})"
+
 
 # ============================================================
 # RECEIVE PHASE  --  collect models from all clients
@@ -32,13 +48,19 @@ def receive_models(server_ip, port, num_clients):
     print()
 
     srv           = make_server_socket(server_ip, port, backlog=num_clients)
-    srv.settimeout(360)
+    srv.settimeout(240)
     client_states = []
     client_sizes  = []
 
     while len(client_states) < num_clients:
         try:
             conn, addr = srv.accept()
+        except socket.timeout:
+            log(f"ERROR: Timeout. Only received {len(client_states)}/{num_clients} models.")
+            srv.close()
+            return None, None
+
+        try:
             conn.settimeout(120)
             raw = recv_data(conn)
             conn.close()
@@ -46,11 +68,13 @@ def receive_models(server_ip, port, num_clients):
                 client_states.append(pickle.loads(raw))
                 client_sizes.append(len(raw))
                 log(f"  Received from client {len(client_states)}/{num_clients}"
-                    f"  |  {addr[0]}  |  {len(raw):,} bytes")
-        except socket.timeout:
-            log(f"ERROR: Timeout. Only received {len(client_states)}/{num_clients} models.")
-            srv.close()
-            return None, None
+                    f"  |  {node_label(addr[0])}  |  {len(raw)/1024:.1f} KB")
+        except Exception as e:
+            log(f"  WARNING: {node_label(addr[0])} connection error ({e}). Retrying slot.")
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     srv.close()
     return client_states, client_sizes
@@ -74,7 +98,7 @@ def broadcast_model(server_ip, port, num_clients, agg_bytes):
             conn.close()
             sent_count += 1
             log(f"  Sent to client {sent_count}/{num_clients}"
-                f"  |  {addr[0]}  |  {len(agg_bytes):,} bytes")
+                f"  |  {node_label(addr[0])}  |  {len(agg_bytes)/1024:.1f} KB")
         except socket.timeout:
             log(f"ERROR: Timeout. Only sent to {sent_count}/{num_clients} clients.")
             break
@@ -86,14 +110,14 @@ def broadcast_model(server_ip, port, num_clients, agg_bytes):
 # ============================================================
 # MAIN SERVER LOOP
 # ============================================================
-def run_server(server_ip, num_clients, num_rounds, port=9000, fault_demo=False):
+def run_server(server_ip, num_clients, num_rounds, upload_port=9000, bcast_port=9001, fault_demo=False):
 
     print()
     print(SEP)
     print("  CENTRALIZED FL  --  SERVER")
     print(SEP)
     print()
-    print(f"  Server IP    : {server_ip}:{port}")
+    print(f"  Server IP    : {server_ip}  (upload:{upload_port}  broadcast:{bcast_port})")
     print(f"  Clients      : {num_clients}  (Nodes 1 through {num_clients})")
     print(f"  Rounds       : {num_rounds}")
     print(f"  Fault demo   : {'YES  --  Server exits at round ' + str(FAIL_ROUND) if fault_demo else 'NO'}")
@@ -133,7 +157,7 @@ def run_server(server_ip, num_clients, num_rounds, port=9000, fault_demo=False):
         # ---- [1/3] Receive ----
         log_thin("[1/3]  RECEIVING MODELS FROM ALL CLIENTS")
         t_recv        = time.time()
-        client_states, client_sizes = receive_models(server_ip, port, num_clients)
+        client_states, client_sizes = receive_models(server_ip, upload_port, num_clients)
         recv_time     = time.time() - t_recv
 
         if client_states is None:
@@ -143,7 +167,7 @@ def run_server(server_ip, num_clients, num_rounds, port=9000, fault_demo=False):
         total_recv = sum(client_sizes)
         print()
         log(f"All {num_clients} models received"
-            f"  |  Total: {total_recv:,} bytes  |  Time: {recv_time:.1f}s")
+            f"  |  Total: {total_recv/1024:.1f} KB  |  Time: {recv_time:.3f}s")
         print()
 
         # ---- [2/3] FedAvg ----
@@ -156,20 +180,20 @@ def run_server(server_ip, num_clients, num_rounds, port=9000, fault_demo=False):
         log(f"FedAvg complete"
             f"  |  {num_clients} models averaged"
             f"  |  Time: {agg_time:.3f}s"
-            f"  |  Model size: {len(agg_bytes):,} bytes")
+            f"  |  Model size: {len(agg_bytes)/1024:.1f} KB")
         print()
 
         # ---- [3/3] Broadcast ----
         log_thin(f"[3/3]  BROADCASTING AGGREGATED MODEL")
         t_send     = time.time()
-        sent_count = broadcast_model(server_ip, port, num_clients, agg_bytes)
+        sent_count = broadcast_model(server_ip, bcast_port, num_clients, agg_bytes)
         send_time  = time.time() - t_send
 
         total_sent = len(agg_bytes) * sent_count
         print()
         log(f"Broadcast complete"
             f"  |  Sent to {sent_count}/{num_clients} clients"
-            f"  |  Total: {total_sent:,} bytes  |  Time: {send_time:.1f}s")
+            f"  |  Total: {total_sent/1024:.1f} KB  |  Time: {send_time:.3f}s")
 
         round_results.append({
             'round':          round_num,
@@ -181,8 +205,8 @@ def run_server(server_ip, num_clients, num_rounds, port=9000, fault_demo=False):
 
         if round_num < num_rounds:
             print()
-            log(f"Waiting 15s before next round...")
-            time.sleep(15)
+            log(f"Waiting 5s before next round...")
+            time.sleep(5)
 
     # ---- Final summary ----
     if not round_results:
@@ -193,13 +217,13 @@ def run_server(server_ip, num_clients, num_rounds, port=9000, fault_demo=False):
     print("  SERVER  --  FINAL SUMMARY")
     print(SEP)
     print()
-    print(f"  {'Round':<7} {'Bytes Received':>16}  {'Bytes Sent':>14}"
-          f"  {'Recv(s)':>8}  {'Send(s)':>8}")
+    print(f"  {'Round':<7} {'Recv (KB)':>12}  {'Sent (KB)':>12}"
+          f"  {'Recv(s)':>10}  {'Send(s)':>10}")
     print(f"  {THIN}")
 
     for r in round_results:
-        print(f"  {r['round']:<7} {r['bytes_received']:>16,}  {r['bytes_sent']:>14,}"
-              f"  {r['recv_time']:>7.1f}s  {r['send_time']:>7.1f}s")
+        print(f"  {r['round']:<7} {r['bytes_received']/1024:>12.1f}  {r['bytes_sent']/1024:>12.1f}"
+              f"  {r['recv_time']:>9.3f}s  {r['send_time']:>9.3f}s")
 
     total_rx   = sum(r['bytes_received'] for r in round_results)
     total_tx   = sum(r['bytes_sent']     for r in round_results)
@@ -207,10 +231,10 @@ def run_server(server_ip, num_clients, num_rounds, port=9000, fault_demo=False):
 
     print()
     print(f"  Rounds completed       : {len(round_results)} / {num_rounds}")
-    print(f"  Total bytes received   : {total_rx:,}")
-    print(f"  Total bytes sent       : {total_tx:,}")
-    print(f"  Total bytes exchanged  : {total_rx + total_tx:,}")
-    print(f"  Total comm time        : {total_time:.1f}s")
+    print(f"  Total received         : {total_rx/1024:.1f} KB")
+    print(f"  Total sent             : {total_tx/1024:.1f} KB")
+    print(f"  Total exchanged        : {(total_rx + total_tx)/1024:.1f} KB")
+    print(f"  Total comm time        : {total_time:.3f}s")
     print(f"  Finished at            : {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print()
     print(SEP)
@@ -228,14 +252,21 @@ if __name__ == '__main__':
                         help='Private IP of this instance (Node 0)')
     parser.add_argument('--clients', type=int, default=7,
                         help='Number of clients to wait for  (default: 7)')
-    parser.add_argument('--rounds', type=int, default=20,
-                        help='Number of FL rounds  (default: 20)')
+    parser.add_argument('--rounds', type=int, default=50,
+                        help='Number of FL rounds  (default: 50)')
+    parser.add_argument('--dist', default='iid', choices=['iid', 'non_iid'],
+                        help='Data distribution of clients  (default: iid)')
     parser.add_argument('--fault-demo', action='store_true',
-                        help='Experiment 5-B: server exits at round 16 to demonstrate SPOF')
+                        help='Experiment 5-B: server exits at round 10 to demonstrate SPOF')
 
     args = parser.parse_args()
 
-    exp_label = 'exp5b_centralized_spof' if args.fault_demo else 'centralized'
+    if args.fault_demo:
+        exp_label = 'centralized_spof'
+    elif args.dist == 'non_iid':
+        exp_label = 'centralized_noniid'
+    else:
+        exp_label = 'centralized_iid'
     log_path  = setup_file_logging(exp_label, 'server')
     print(f"  Log file: {log_path}", flush=True)
 

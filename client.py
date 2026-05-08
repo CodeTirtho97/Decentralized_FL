@@ -29,7 +29,7 @@ FAIL_ROUND = 10
 # ============================================================
 # SERVER COMMUNICATION
 # ============================================================
-def send_to_server(server_ip, port, weights_bytes, timeout=180):
+def send_to_server(server_ip, port, weights_bytes, timeout=240):
     deadline = time.time() + timeout
     attempt  = 0
     while time.time() < deadline:
@@ -48,7 +48,7 @@ def send_to_server(server_ip, port, weights_bytes, timeout=180):
     return False
 
 
-def recv_from_server(server_ip, port, timeout=180):
+def recv_from_server(server_ip, port, timeout=300):
     deadline = time.time() + timeout
     attempt  = 0
     while time.time() < deadline:
@@ -72,7 +72,7 @@ def recv_from_server(server_ip, port, timeout=180):
 # ============================================================
 def run_client(node_id, server_ip, distribution, alpha,
                num_rounds, local_epochs, batch_size,
-               samples_per_node, port=9000, fault_demo=False):
+               samples_per_node, upload_port=9000, bcast_port=9001, fault_demo=False):
 
     device = __import__('torch').device('cpu')
 
@@ -83,7 +83,7 @@ def run_client(node_id, server_ip, distribution, alpha,
     print(SEP)
     print()
     print(f"  Node ID      : {node_id}")
-    print(f"  Server       : {server_ip}:{port}  (Node 0)")
+    print(f"  Server       : {server_ip}  (upload:{upload_port}  broadcast:{bcast_port})  (Node 0)")
     print(f"  Distribution : {distribution.upper()}  (alpha={alpha})")
     print(f"  Rounds       : {num_rounds}  |  Epochs: {local_epochs}"
           f"  |  Batch: {batch_size}  |  Samples: {samples_per_node}")
@@ -126,18 +126,18 @@ def run_client(node_id, server_ip, distribution, alpha,
         acc_local   = evaluate(local_model, test_loader, device)
 
         print()
-        log(f"      Done  |  Time: {train_time:.1f}s  |  Accuracy: {acc_local:.2f}%")
+        log(f"      Done  |  Time: {train_time:.3f}s  |  Accuracy: {acc_local:.2f}%")
         print()
 
         # ---- [2/3] Upload to server ----
-        log_thin(f"[2/3]  UPLOADING TO SERVER  ({server_ip}:{port})")
+        log_thin(f"[2/3]  UPLOADING TO SERVER  ({server_ip}:{upload_port})")
 
         weights_bytes = pickle.dumps(local_model.state_dict())
-        log(f"      Model size: {len(weights_bytes):,} bytes  |  Connecting...")
+        log(f"      Model size: {len(weights_bytes)/1024:.1f} KB  |  Connecting...")
         print()
 
         t_send = time.time()
-        ok     = send_to_server(server_ip, port, weights_bytes)
+        ok     = send_to_server(server_ip, upload_port, weights_bytes)
         send_time = time.time() - t_send
 
         if not ok:
@@ -146,7 +146,7 @@ def run_client(node_id, server_ip, distribution, alpha,
             print("  CRITICAL  --  SERVER UNREACHABLE")
             print(SEP)
             print()
-            log(f"Cannot reach server at {server_ip}:{port}.")
+            log(f"Cannot reach server at {server_ip}:{upload_port}.")
             if fault_demo:
                 log(f"")
                 log(f"EXPERIMENT 5-B  --  SPOF CONFIRMED")
@@ -166,7 +166,7 @@ def run_client(node_id, server_ip, distribution, alpha,
             print(SEP)
             break
 
-        log(f"      Upload complete  |  Time: {send_time:.1f}s")
+        log(f"      Upload complete  |  Time: {send_time:.3f}s")
         print()
 
         # ---- [3/3] Download aggregated model ----
@@ -176,7 +176,7 @@ def run_client(node_id, server_ip, distribution, alpha,
         print()
 
         t_recv  = time.time()
-        raw_agg = recv_from_server(server_ip, port)
+        raw_agg = recv_from_server(server_ip, bcast_port)
         recv_time   = time.time() - t_recv
         total_comm  = send_time + recv_time
 
@@ -190,25 +190,29 @@ def run_client(node_id, server_ip, distribution, alpha,
         delta   = acc_agg - acc_local
         sign    = "+" if delta >= 0 else ""
 
-        log(f"      Received: {len(raw_agg):,} bytes"
-            f"  |  Upload: {send_time:.1f}s  |  Download: {recv_time:.1f}s"
-            f"  |  Total comm: {total_comm:.1f}s")
+        log(f"      Received: {len(raw_agg)/1024:.1f} KB"
+            f"  |  Upload: {send_time:.3f}s  |  Download: {recv_time:.3f}s"
+            f"  |  Total comm: {total_comm:.3f}s")
         log(f"      Accuracy  local: {acc_local:.2f}%"
             f"  -->  aggregated: {acc_agg:.2f}%"
             f"  (change: {sign}{delta:.2f}%)")
         print()
 
         results.append({
-            'round':     round_num,
-            'local_acc': acc_local,
-            'agg_acc':   acc_agg,
-            'delta':     delta,
-            'comm_time': total_comm,
+            'round':      round_num,
+            'local_acc':  acc_local,
+            'agg_acc':    acc_agg,
+            'delta':      delta,
+            'train_time': train_time,
+            'comm_time':  total_comm,
+            'round_time': train_time + total_comm,
+            'bytes_sent': len(weights_bytes),
+            'bytes_recv': len(raw_agg),
         })
 
         if round_num < num_rounds:
-            log(f"Waiting 15s before next round...")
-            time.sleep(15)
+            log(f"Waiting 5s before next round...")
+            time.sleep(5)
 
     # ---- Final table ----
     if not results:
@@ -219,8 +223,8 @@ def run_client(node_id, server_ip, distribution, alpha,
     print(f"  CENTRALIZED FL  --  NODE {node_id}  --  RESULTS")
     print(SEP)
     print()
-    print(f"  {'Round':<7} {'Local Acc':>12}  {'Aggregated':>12}"
-          f"  {'Change':>10}  {'Comm(s)':>9}  {'Trend':>6}")
+    print(f"  {'Round':<7} {'Local Acc':>12}  {'Aggregated':>12}  {'Change':>10}"
+          f"  {'Train(s)':>10}  {'Comm(s)':>9}  {'Round(s)':>10}  {'Trend':>6}")
     print(f"  {THIN}")
 
     for r in results:
@@ -229,20 +233,31 @@ def run_client(node_id, server_ip, distribution, alpha,
         print(f"  {r['round']:<7} {r['local_acc']:>11.2f}%  "
               f"{r['agg_acc']:>11.2f}%  "
               f"{sign}{r['delta']:>9.2f}%  "
-              f"{r['comm_time']:>8.1f}s  {arrow:>6}")
+              f"{r['train_time']:>9.3f}s  "
+              f"{r['comm_time']:>8.3f}s  "
+              f"{r['round_time']:>9.3f}s  {arrow:>6}")
 
-    completed  = len(results)
-    final_acc  = results[-1]['agg_acc']
-    best_acc   = max(r['agg_acc']  for r in results)
-    best_rnd   = max(results, key=lambda r: r['agg_acc'])['round']
-    avg_comm   = sum(r['comm_time'] for r in results) / completed
+    completed      = len(results)
+    final_acc      = results[-1]['agg_acc']
+    best_acc       = max(r['agg_acc']    for r in results)
+    best_rnd       = max(results, key=lambda r: r['agg_acc'])['round']
+    avg_train      = sum(r['train_time'] for r in results) / completed
+    avg_comm       = sum(r['comm_time']  for r in results) / completed
+    avg_round      = sum(r['round_time'] for r in results) / completed
+    total_bytes_tx = sum(r['bytes_sent'] for r in results)
+    total_bytes_rx = sum(r['bytes_recv'] for r in results)
 
     print()
-    print(f"  Rounds completed  : {completed} / {num_rounds}")
-    print(f"  Final accuracy    : {final_acc:.2f}%  (Round {completed})")
-    print(f"  Best  accuracy    : {best_acc:.2f}%  (Round {best_rnd})")
-    print(f"  Avg comm / round  : {avg_comm:.1f}s  (upload + download)")
-    print(f"  Finished at       : {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"  Rounds completed   : {completed} / {num_rounds}")
+    print(f"  Final accuracy     : {final_acc:.2f}%  (Round {completed})")
+    print(f"  Best  accuracy     : {best_acc:.2f}%  (Round {best_rnd})")
+    print(f"  Avg train / round  : {avg_train:.3f}s")
+    print(f"  Avg comm  / round  : {avg_comm:.3f}s  (upload + download)")
+    print(f"  Avg round duration : {avg_round:.3f}s")
+    print(f"  Total sent         : {total_bytes_tx/1024:.1f} KB  (model uploads)")
+    print(f"  Total received     : {total_bytes_rx/1024:.1f} KB  (aggregated model downloads)")
+    print(f"  Total comm         : {(total_bytes_tx + total_bytes_rx)/1024:.1f} KB")
+    print(f"  Finished at        : {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print()
     print(SEP)
 
@@ -263,19 +278,19 @@ if __name__ == '__main__':
                         help='Data distribution  (default: iid)')
     parser.add_argument('--alpha',   type=float, default=0.5,
                         help='Dirichlet alpha for non_iid  (default: 0.5)')
-    parser.add_argument('--rounds',  type=int, default=20,
-                        help='Number of FL rounds  (default: 20)')
+    parser.add_argument('--rounds',  type=int, default=50,
+                        help='Number of FL rounds  (default: 50)')
     parser.add_argument('--fault-demo', action='store_true',
                         help='Experiment 5-B: log SPOF confirmation when server dies')
 
     args = parser.parse_args()
 
     if args.fault_demo:
-        exp_label = 'exp5b_centralized_noniid_spof'
+        exp_label = 'centralized_spof'
     elif args.dist == 'non_iid':
-        exp_label = 'exp2_centralized_noniid'
+        exp_label = 'centralized_noniid'
     else:
-        exp_label = 'exp1_centralized_iid'
+        exp_label = 'centralized_iid'
     log_path = setup_file_logging(exp_label, f'client_{args.node_id}')
     print(f"  Log file: {log_path}", flush=True)
 
@@ -287,6 +302,6 @@ if __name__ == '__main__':
         num_rounds       = args.rounds,
         local_epochs     = 5,
         batch_size       = 64,
-        samples_per_node = 2500,
+        samples_per_node = 6250,
         fault_demo       = args.fault_demo
     )
