@@ -5,7 +5,12 @@ fl-thesis-key.pem
 
 # Personal / thesis documents
 Steps.txt
-Thesis_Report_4thSem.pdf
+Implementation_Approach.md
+main.tex
+*.pdf
+
+# Screenshots (binary blobs, not source code)
+Screenshots/
 
 # Python
 __pycache__/
@@ -34,6 +39,7 @@ results/
 # Private run guide and experiment scripts (contain real IPs)
 How to Run.md
 exp*.sh
+launch.sh
 
 # Superseded files (kept locally for reference only)
 central_server.py

@@ -129,14 +129,17 @@ between those two models is what your experiment exposed.
 Nobody gives a number for synchronous gossip vs FedAvg under controlled conditions.
 
 Your numbers:
-- IID: centralized peaks at 61.69%, decentralized at 57.48% — **gap: −4.21 pp**
-- Non-IID: centralized peaks at 57.60%, decentralized at 53.44% — **gap: −4.16 pp**
+- IID: centralized peaks at **61.69%**, decentralized at **57.48%** — **gap: −4.21 pp**
+- Non-IID: centralized peaks at **57.60%**, decentralized at **53.44%** — **gap: −4.16 pp**
 - Communication wait: centralized ~3.9s/round, decentralized ~25.9s/round — **6.6× longer**
 - Fault outcome: decentralized 87.5% survival vs centralized 0% survival
 
 These are not estimates. They come from 6 controlled experiments on identical hardware
-with the only variable being architecture. An engineer choosing between centralized and
-decentralized FL now has a reference number, not just a theoretical argument.
+with the only variable being architecture. Experiments 1–4 were executed three times
+(May 7, 8, 9) under fixed seed=42 and produced consistent results within 0.33 pp across
+all sessions — confirming infrastructure stability. An engineer choosing between centralized
+and decentralized FL now has a reference number from real cloud deployment, not just a
+theoretical argument.
 
 ---
 
@@ -221,7 +224,7 @@ controlled experiments, honest analysis. Here is what you have against each crit
 | Literature foundation | Yes — FedAvg, D-PSGD, gossip FL, Non-IID convergence, gossip protocols |
 | Original implementation | Yes — both architectures from scratch, raw TCP, no FL framework |
 | Controlled experiments | Yes — 6 experiments, same hardware/model/dataset, one variable changes |
-| Empirical results | Yes — round-by-round logs, 4 comparison reports, all data timestamped |
+| Empirical results | Yes — round-by-round logs, 4 comparison reports, all data timestamped; Exps 1–4 executed 3 times (May 7–9) under fixed seed=42, results consistent within 0.33 pp confirming infrastructure stability |
 | Novel finding | Yes — cascading timing-drift, secondary isolation, distance-decay ripple effect |
 | Real deployment | Yes — 8 separate AWS EC2 instances, not containers, not simulation |
 
@@ -253,10 +256,12 @@ infrastructure. This thesis addresses that gap.
 We implement both centralized FedAvg and decentralized synchronous gossip FL from scratch
 and compare them on 8 real AWS EC2 instances using CIFAR-10 and a standard CNN. Six
 controlled experiments cover IID and Non-IID data distributions (Dirichlet α=0.5) and
-include live fault injection in both architectures. Results show that decentralized gossip
-achieves within 4.2 percentage points of centralized FedAvg accuracy while eliminating the
-SPOF entirely: when the server fails, all 7 clients halt permanently (0/7 complete training);
-when one ring node fails, 7 of 8 nodes complete all 50 rounds unaffected.
+include live fault injection in both architectures. Results show that decentralized gossip achieves within 4.21 pp of centralized FedAvg
+accuracy (61.69% vs 57.48% under IID) while eliminating the SPOF entirely: when the
+server fails, all 7 clients halt permanently (0/7 complete training); when one ring node
+fails, 7 of 8 nodes complete all 50 rounds unaffected. Experiments were executed three
+times (May 7, 8, 9) under identical configuration (seed=42), with results consistent
+within 0.33 pp across all sessions.
 
 Beyond confirming fault tolerance, we document a previously unreported cascading
 timing-drift phenomenon: when a ring node fails, TCP receive timeouts inflate adjacent

@@ -22,11 +22,13 @@ A thesis implementation that compares centralized and decentralized federated le
 This repository benchmarks two FL designs under identical training settings:
 
 - Centralized FL: one server aggregates client models (FedAvg).
-- Decentralized FL: ring-topology gossip where each node exchanges with left and right neighbors.
+- Decentralized FL (Ring): gossip where each node exchanges with left and right neighbors only.
+- Decentralized FL (Fully Connected): gossip where each node exchanges with all other nodes per round.
 
 The comparison covers:
 - IID vs Non-IID data distributions
-- Communication behavior
+- Communication behavior and overhead
+- Effect of graph topology on convergence (ring vs fully connected)
 - Fault tolerance (SPOF vs no-SPOF demonstration)
 
 ## Key Features
@@ -44,24 +46,36 @@ The comparison covers:
 - Upload port: `9000`
 - Broadcast port: `9001`
 
-### Decentralized FL (Experiments 3, 4, 5-A)
+### Decentralized FL — Ring (Experiments 3, 4, 5-A)
 - All 8 nodes run `node.py`
-- Ring topology: each node communicates with 2 neighbors
+- Ring topology: each node communicates with 2 neighbors only
 - Listener port per node: `8000 + node_id`
 - Synchronous round pattern: `train -> push -> receive -> blend -> evaluate`
+
+### Decentralized FL — Fully Connected (Experiments 6-A, 6-B, 6-C)
+- All 8 nodes run `node_fc.py`
+- Fully-connected topology: each node communicates with all other 7 nodes per round
+- Same port scheme as ring: listener port = `8000 + node_id`
+- Same synchronous pattern: `train -> push to all -> receive from all -> blend -> evaluate`
+- Blend pool: 8 models (own + 7 peers) vs 3 in ring (own + 2 neighbors)
+- Exp 6-C: fault demo — Node 3 exits at round 10; all 7 surviving nodes detect the failure (vs only 2 in ring Exp 5-A)
 
 ## Project Structure
 ```text
 VM_Decentralized/
 |-- server.py                  # Centralized server
 |-- client.py                  # Centralized client
-|-- node.py                    # Decentralized node
+|-- node.py                    # Decentralized node (ring topology)
+|-- node_fc.py                 # Decentralized node (fully-connected topology)
 |-- exp1_centralized_iid.sh
 |-- exp2_centralized_noniid.sh
 |-- exp3_decentralized_iid.sh
 |-- exp4_decentralized_noniid.sh
 |-- exp5a_decentralized_fault.sh
 |-- exp5b_centralized_spof.sh
+|-- exp6a_decentralized_fc_iid.sh
+|-- exp6b_decentralized_fc_noniid.sh
+|-- exp6c_decentralized_fc_fault.sh
 |-- shared/
 |   |-- data.py                # CIFAR-10 loading + IID/Non-IID split
 |   |-- model.py               # CNNCifar architecture
@@ -76,14 +90,17 @@ VM_Decentralized/
 
 ## Experimental Design
 ### Experiments
-| ID | Scenario | Architecture | Distribution |
-|---|---|---|---|
-| 1 | Baseline | Centralized | IID |
-| 2 | Heterogeneous data | Centralized | Non-IID (Dirichlet alpha=0.5) |
-| 3 | Baseline without server | Decentralized | IID |
-| 4 | Heterogeneous data without server | Decentralized | Non-IID (Dirichlet alpha=0.5) |
-| 5-A | Fault tolerance demo | Decentralized | Non-IID |
-| 5-B | SPOF demo | Centralized | Non-IID |
+| ID | Scenario | Architecture | Topology | Distribution |
+|---|---|---|---|---|
+| 1 | Baseline | Centralized | Star (server–client) | IID |
+| 2 | Heterogeneous data | Centralized | Star (server–client) | Non-IID (Dirichlet alpha=0.5) |
+| 3 | Baseline without server | Decentralized | Ring (2 neighbors) | IID |
+| 4 | Heterogeneous data without server | Decentralized | Ring (2 neighbors) | Non-IID (Dirichlet alpha=0.5) |
+| 5-A | Fault tolerance demo | Decentralized | Ring (2 neighbors) | Non-IID |
+| 5-B | SPOF demo | Centralized | Star (server–client) | Non-IID |
+| 6-A | Topology comparison — upper bound | Decentralized | Fully Connected (7 neighbors) | IID |
+| 6-B | Topology comparison — upper bound | Decentralized | Fully Connected (7 neighbors) | Non-IID (Dirichlet alpha=0.5) |
+| 6-C | FC fault tolerance demo | Decentralized | Fully Connected (7 neighbors) | Non-IID (Dirichlet alpha=0.5) |
 
 ### Default Training Parameters
 | Parameter | Value |
@@ -166,6 +183,9 @@ Typical labels:
 - `decentralized_noniid`
 - `decentralized_fault`
 - `centralized_spof`
+- `decentralized_fc_iid`
+- `decentralized_fc_noniid`
+- `decentralized_fc_fault`
 
 Local collected logs and summaries are kept in this repository under `results/`.
 
