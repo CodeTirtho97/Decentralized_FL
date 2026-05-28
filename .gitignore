@@ -1,20 +1,12 @@
-# AWS credentials and sensitive files
-aws_node_ips.md
+# User-specific configuration (contains real IPs and paths)
+config.env
+
+# SSH private keys — NEVER commit
 *.pem
-fl-thesis-key.pem
-
-# Personal / thesis documents
-Steps.txt
-Implementation_Approach.md
-main.tex
-*.pdf
-
-# Screenshots (binary blobs, not source code)
-Screenshots/
+*.key
 
 # Python
 __pycache__/
-shared/__pycache__/
 *.pyc
 *.pyo
 *.pyd
@@ -27,24 +19,15 @@ venv/
 .venv/
 env/
 
-# Dataset (large, downloadable via torchvision)
+# Dataset (large — downloadable automatically via torchvision)
 data/
 
-# Logs and experiment output
+# Experiment output
 logs/
 results/
+figures/
 *.log
 *.out
-
-# Private run guide and experiment scripts (contain real IPs)
-How to Run.md
-exp*.sh
-launch.sh
-
-# Superseded files (kept locally for reference only)
-central_server.py
-central_client.py
-fl_node_async.py
 
 # OS files
 .DS_Store

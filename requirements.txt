@@ -1,0 +1,15 @@
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+
+# For tools/generate_round_delay_graphs.py
+matplotlib>=3.7.0
+
+# For Fedstellar experiments only (Experiment 7)
+# Uncomment and run: pip install -r requirements-fedstellar.txt
+# p2pfl[dp]==0.4.4
+# lightning>=2.0.0
+# grpcio>=1.54.0
+# grpcio-tools>=1.54.0
+# datasets
+# huggingface_hub
