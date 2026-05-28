@@ -269,10 +269,23 @@ Distance-dependent communication time inflation after Node 3 failure:
 
 ---
 
-## Citation
+## Limitations
 
-```
-Bhattacharya, T. (2026). Synchronization and Fault Propagation in Decentralized
-Federated Learning: An Empirical Evaluation on Real Cloud Infrastructure.
-M.Tech Thesis, Indian Institute of Information Technology Allahabad.
-```
+These limitations are acknowledged as deliberate scope boundaries, not oversights.
+
+- **Small scale (8 nodes).** Ring gossip convergence is O(N/2) hops — at 100 nodes, full model diffusion takes 50 rounds alone. Results are valid as a proof-of-concept; scaling behavior at larger N is left as future work.
+- **Homogeneous hardware.** All nodes are identical t3.micro instances running synchronously. Heterogeneous devices with straggler nodes (different training speeds) represent a separate research problem — async FL — and are intentionally out of scope for a clean architectural comparison.
+- **Fixed 120s receive timeout.** The cascading isolation effect (Nodes 2 and 4 losing all connectivity by rounds 38 and 41) is a direct consequence of this fixed timeout. Adaptive timeout backoff or skip-and-continue logic would prevent secondary isolation and is the most actionable direction for follow-up work.
+- **Clean failure only.** Experiments inject honest node death — a node stops responding. Byzantine behavior (a malicious node sending corrupted weights) is a separate research track and is not tested here.
+- **Synchronous protocol only.** Both architectures use synchronous round execution by design, to keep topology as the sole variable. Asynchronous gossip (e.g. Fedstellar) introduces staleness as a second variable and would make the centralized vs decentralized comparison uninterpretable.
+
+---
+
+## Acknowledgements
+
+This work was carried out under the guidance of **Dr. Anshu S. Anand**, at the
+**Indian Institute of Information Technology Allahabad** as part of the M.Tech
+programme in Information Technology.
+
+The experiments were conducted on AWS EC2 instances. CIFAR-10 dataset was used
+solely for academic research purposes.
