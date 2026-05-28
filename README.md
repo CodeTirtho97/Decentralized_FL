@@ -7,6 +7,10 @@
 ![Dataset](https://img.shields.io/badge/Dataset-CIFAR--10-6366f1)
 ![License](https://img.shields.io/badge/License-MIT-22c55e)
 
+
+<img width="1536" height="1024" alt="844f889a-63fb-49d3-ad6a-3893ec3375fa" src="https://github.com/user-attachments/assets/cdf8584e-4382-4d27-8059-cc43cb760510" />
+
+
 Federated Learning allows distributed devices to collaboratively train a model without
 sharing raw data, but the dominant architecture — a central aggregation server — introduces
 a structural fragility that is widely acknowledged yet rarely demonstrated on real
