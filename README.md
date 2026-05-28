@@ -268,11 +268,3 @@ Distance-dependent communication time inflation after Node 3 failure:
 | 3-hops (Node 7) | ~48.6 s / round |
 
 ---
-
-## Citation
-
-```
-Bhattacharya, T. (2026). Synchronization and Fault Propagation in Decentralized
-Federated Learning: An Empirical Evaluation on Real Cloud Infrastructure.
-M.Tech Thesis, Indian Institute of Information Technology Allahabad.
-```
