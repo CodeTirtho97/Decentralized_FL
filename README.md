@@ -1,6 +1,22 @@
 # Synchronization and Fault Propagation in Decentralized Federated Learning
 
-**An empirical study on real cloud infrastructure — 8 AWS EC2 nodes, raw TCP sockets, live fault injection.**
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c?logo=pytorch&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Ubuntu%2022.04-e95420?logo=ubuntu&logoColor=white)
+![Cloud](https://img.shields.io/badge/Cloud-AWS%20EC2-ff9900?logo=amazonec2&logoColor=white)
+![Dataset](https://img.shields.io/badge/Dataset-CIFAR--10-6366f1)
+![License](https://img.shields.io/badge/License-MIT-22c55e)
+
+Federated Learning allows distributed devices to collaboratively train a model without
+sharing raw data, but the dominant architecture — a central aggregation server — introduces
+a structural fragility that is widely acknowledged yet rarely demonstrated on real
+infrastructure. This thesis builds both a centralized and a decentralized peer-to-peer
+gossip FL system from scratch, deploys them on 8 AWS EC2 instances using raw TCP sockets,
+and subjects each to controlled failure injection under identical hardware and data
+conditions. Beyond confirming fault tolerance differences, the experiments uncover a
+**cascading synchronization failure** in the ring gossip protocol — an emergent behavior
+where a single node's death eventually isolates its neighbors from the entire ring through
+TCP timeout inflation — a dynamic that existing theoretical FL models do not predict.
 
 ---
 
