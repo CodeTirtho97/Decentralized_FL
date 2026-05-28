@@ -23,7 +23,7 @@ TCP timeout inflation — a dynamic that existing theoretical FL models do not p
 ## What This Is
 
 This project implements and empirically compares two Federated Learning architectures
-deployed on **8 real AWS EC2 instances**:
+deployed on **8 AWS EC2 instances**:
 
 - **Centralized FL (FedAvg)** — McMahan et al. 2017. A central server aggregates models
   from all clients each round. Standard star topology.
