@@ -1,8 +1,8 @@
 """
-experiments/fedstellar/shared/data_fedstellar.py
+fedstellar_experiment/shared/data_fedstellar.py
 
 CIFAR-10 IID partition for p2pfl.
-Uses the same IID split logic as src/shared/data.py so results are directly
+Uses the same IID split logic as shared/data.py so results are directly
 comparable to Experiment 3 (synchronous ring gossip).
 """
 
@@ -11,8 +11,9 @@ import torch
 from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 
+NUM_NODES       = 8
 SAMPLES_PER_NODE = 6250
-DATA_ROOT        = './data'
+DATA_ROOT       = './data'
 
 
 def _transform():
@@ -22,23 +23,23 @@ def _transform():
     ])
 
 
-def get_fedstellar_partition(node_id: int, num_nodes: int = 8,
-                              samples_per_node: int = SAMPLES_PER_NODE,
-                              data_root: str = DATA_ROOT):
+def get_fedstellar_partition(node_id: int):
     """
     Returns (train_subset, test_dataset) using the same IID split as
-    src/shared/data.py iid_split() -- same seed, same index order.
+    shared/data.py iid_split() — same seed, same index order.
+
+    p2pfl 0.4.x LightningLearner accepts a torch Dataset directly.
     """
     np.random.seed(42)
     torch.manual_seed(42)
 
     transform  = _transform()
-    train_full = datasets.CIFAR10(data_root, train=True,  download=False, transform=transform)
-    test_full  = datasets.CIFAR10(data_root, train=False, download=False, transform=transform)
+    train_full = datasets.CIFAR10(DATA_ROOT, train=True,  download=False, transform=transform)
+    test_full  = datasets.CIFAR10(DATA_ROOT, train=False, download=False, transform=transform)
 
-    all_idx      = np.random.permutation(len(train_full))
-    start        = node_id * samples_per_node
-    end          = start   + samples_per_node
+    all_idx = np.random.permutation(len(train_full))
+    start   = node_id * SAMPLES_PER_NODE
+    end     = start   + SAMPLES_PER_NODE
     train_subset = Subset(train_full, all_idx[start:end].tolist())
 
     return train_subset, test_full

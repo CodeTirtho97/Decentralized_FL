@@ -2,11 +2,11 @@
 server.py  --  Centralized FL Server  (Experiments 1, 2, 5-B)
 
 Usage:
-    python3 src/server.py <server_ip> [--clients N] [--rounds N] [--fault-demo]
+    python3 server.py <server_ip> [--clients N] [--rounds N] [--fault-demo]
 
 Examples:
-    PYTHONPATH=src python3 src/server.py 192.168.1.10
-    PYTHONPATH=src python3 src/server.py 192.168.1.10 --fault-demo   # Exp 5-B SPOF demo
+    python3 server.py 172.31.21.108                        # Exp 1 or 2
+    python3 server.py 172.31.21.108 --fault-demo           # Exp 5-B (SPOF demo)
 """
 
 import argparse
@@ -21,6 +21,22 @@ from shared.net   import send_data, recv_data, make_server_socket
 from shared.train import fedavg
 
 FAIL_ROUND = 10
+
+# IP → Node ID lookup for readable log lines
+NODE_ID_MAP = {
+    "172.31.21.108": 0,
+    "172.31.31.28":  1,
+    "172.31.24.251": 2,
+    "172.31.26.122": 3,
+    "172.31.24.136": 4,
+    "172.31.22.247": 5,
+    "172.31.20.96":  6,
+    "172.31.18.64":  7,
+}
+
+def node_label(ip):
+    nid = NODE_ID_MAP.get(ip, "?")
+    return f"Node {nid} ({ip})"
 
 
 # ============================================================
@@ -52,9 +68,9 @@ def receive_models(server_ip, port, num_clients):
                 client_states.append(pickle.loads(raw))
                 client_sizes.append(len(raw))
                 log(f"  Received from client {len(client_states)}/{num_clients}"
-                    f"  |  {addr[0]}  |  {len(raw)/1024:.1f} KB")
+                    f"  |  {node_label(addr[0])}  |  {len(raw)/1024:.1f} KB")
         except Exception as e:
-            log(f"  WARNING: {addr[0]} connection error ({e}). Retrying slot.")
+            log(f"  WARNING: {node_label(addr[0])} connection error ({e}). Retrying slot.")
             try:
                 conn.close()
             except Exception:
@@ -82,7 +98,7 @@ def broadcast_model(server_ip, port, num_clients, agg_bytes):
             conn.close()
             sent_count += 1
             log(f"  Sent to client {sent_count}/{num_clients}"
-                f"  |  {addr[0]}  |  {len(agg_bytes)/1024:.1f} KB")
+                f"  |  {node_label(addr[0])}  |  {len(agg_bytes)/1024:.1f} KB")
         except socket.timeout:
             log(f"ERROR: Timeout. Only sent to {sent_count}/{num_clients} clients.")
             break

@@ -1,8 +1,8 @@
 """
-experiments/fedstellar/shared/model_lightning.py
+fedstellar_experiment/shared/model_lightning.py
 
 CNNCifar wrapped as a PyTorch Lightning module for use with p2pfl.
-Identical architecture to src/shared/model.py -- same conv layers, FC layers, ~62K params.
+Identical architecture to shared/model.py — same conv layers, FC layers, ~62K params.
 """
 
 import torch
@@ -15,8 +15,8 @@ class CNNCifarLightning(LightningModule):
     """
     CNNCifar for CIFAR-10.
     Architecture: Conv(3->6) -> Pool -> Conv(6->16) -> Pool -> FC(400->120->84->10)
-    Parameters: ~62,006  (identical to src/shared/model.py CNNCifar)
-    lr=0.01, momentum=0.5 -- same as node.py train_local().
+    Parameters: ~62,006  (identical to shared/model.py CNNCifar)
+    lr=0.01, momentum=0.5 — same as node.py train_local().
     """
 
     def __init__(self, num_classes=10, lr=0.01, momentum=0.5):

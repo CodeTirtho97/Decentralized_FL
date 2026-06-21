@@ -4,12 +4,12 @@ shared/log.py  --  Logging utilities
 
 Log structure:
     logs/YYYY_MM_DD/
-    ├── centralized_iid/        server.log, client_1.log ... client_N.log
-    ├── centralized_noniid/     server.log, client_1.log ... client_N.log
-    ├── decentralized_iid/      node_0.log ... node_N.log
-    ├── decentralized_noniid/   node_0.log ... node_N.log
-    ├── centralized_spof/       server.log, client_1.log ... client_N.log
-    └── decentralized_fault/    node_0.log ... node_N.log
+    ├── centralized_iid/        server.log, client_1.log ... client_7.log
+    ├── centralized_noniid/     server.log, client_1.log ... client_7.log
+    ├── decentralized_iid/      node_0.log ... node_7.log
+    ├── decentralized_noniid/   node_0.log ... node_7.log
+    ├── centralized_spof/       server.log, client_1.log ... client_7.log
+    └── decentralized_fault/    node_0.log ... node_7.log
 """
 
 import os
@@ -77,6 +77,12 @@ def setup_file_logging(exp_label, node_label):
     Create  logs/YYYY_MM_DD/<exp_label>/<node_label>.log
     and redirect sys.stdout so all print() calls go to both
     the terminal and the log file automatically.
+
+    Structure:
+      logs/2026_05_07/centralized_iid/server.log
+      logs/2026_05_07/centralized_iid/client_1.log
+      logs/2026_05_07/decentralized_iid/node_0.log
+      ...
 
     Re-running the same experiment on the same day overwrites
     the previous file so only the latest run is kept.

@@ -50,7 +50,7 @@ def evaluate(model, test_loader, device):
 
 
 def fedavg(state_dicts):
-    """Average N model state dicts. Used by centralized server and gossip blend."""
+    """Average N model state dicts. Used by centralized server."""
     avg = copy.deepcopy(state_dicts[0])
     for key in avg:
         avg[key] = avg[key].float()
@@ -61,7 +61,7 @@ def fedavg(state_dicts):
 
 
 def blend_models(model_a, model_b, alpha=0.5):
-    """Weighted average of two models."""
+    """Weighted average of two models. Used by decentralized gossip."""
     sa      = model_a.state_dict()
     sb      = model_b.state_dict()
     blended = {k: alpha * sa[k].float() + (1.0 - alpha) * sb[k].float() for k in sa}

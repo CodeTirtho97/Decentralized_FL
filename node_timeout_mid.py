@@ -1,19 +1,19 @@
 """
-node.py  --  Decentralized FL Node  (Experiments 3, 4, 5-A)
-             Ring topology, synchronous gossip weight sharing.
+node_timeout_mid.py  --  Decentralized FL Node  (Experiment 5A-T40/60)
+                         Timeout variant: push=40s, receive=60s
+                         All other logic identical to node.py
 
-             Each round: Train -> Push to neighbors -> Receive from neighbors
-                         -> Blend (equal-weight avg) -> Evaluate
+             Ring topology, 8 nodes, synchronous gossip weight sharing
+
+             Each round: Train → Push to neighbors → Receive from neighbors
+                         → Blend (equal-weight avg) → Evaluate
 
 Usage:
-    PYTHONPATH=src python3 src/node.py <node_id> <my_ip> <left_ip> <right_ip>
-                                        [--dist iid|non_iid] [--alpha F]
-                                        [--rounds N] [--num-nodes N] [--fault-demo]
+    python3 node_timeout_mid.py <node_id> <my_ip> <left_ip> <right_ip>
+                   [--dist iid|non_iid] [--alpha F] [--rounds N] [--fault-demo]
 
 Examples:
-    PYTHONPATH=src python3 src/node.py 0 192.168.1.10 192.168.1.17 192.168.1.11
-    PYTHONPATH=src python3 src/node.py 0 192.168.1.10 192.168.1.17 192.168.1.11 --dist non_iid
-    PYTHONPATH=src python3 src/node.py 0 192.168.1.10 192.168.1.17 192.168.1.11 --fault-demo
+    python3 node_timeout_mid.py 0 172.31.21.108 172.31.18.64 172.31.31.28 --fault-demo
 """
 
 import argparse
@@ -25,7 +25,7 @@ import time
 
 from shared.log   import log, log_thin, SEP, THIN, setup_file_logging
 from shared.model import CNNCifar
-from shared.data  import get_loaders
+from shared.data  import get_loaders, NUM_NODES
 from shared.net   import send_data, recv_data, make_server_socket
 from shared.train import train_local, evaluate, fedavg
 
@@ -36,7 +36,7 @@ FAIL_ROUND = 10      # Experiment 5-A: node 3 exits at this round
 # ============================================================
 # PUSH TO ONE NEIGHBOR  --  retries until timeout
 # ============================================================
-def push_to_neighbor(label, ip, port, weights_bytes, results_dict, timeout=90):
+def push_to_neighbor(label, ip, port, weights_bytes, results_dict, timeout=40):
     deadline = time.time() + timeout
     attempt  = 0
     while time.time() < deadline:
@@ -66,9 +66,9 @@ def push_to_neighbor(label, ip, port, weights_bytes, results_dict, timeout=90):
 # RECEIVE FROM NEIGHBORS  --  per-round blocking listener
 # ============================================================
 def receive_from_neighbors(my_ip, listen_port, expected_count,
-                           results_dict, ready_event, timeout=120):
+                           results_dict, ready_event, timeout=60):
     srv = make_server_socket(my_ip, listen_port, backlog=expected_count + 1)
-    ready_event.set()   # socket is bound -- caller may now push
+    ready_event.set()   # socket is bound — caller may now push
     srv.settimeout(2.0)
     received = []
     deadline = time.time() + timeout
@@ -102,11 +102,11 @@ def receive_from_neighbors(my_ip, listen_port, expected_count,
 # ============================================================
 def run_node(node_id, my_ip, left_ip, right_ip,
              num_rounds, local_epochs, batch_size,
-             samples_per_node, distribution, alpha, fault_demo, num_nodes):
+             samples_per_node, distribution, alpha, fault_demo):
 
     device      = __import__('torch').device('cpu')
-    left_id     = (node_id - 1) % num_nodes
-    right_id    = (node_id + 1) % num_nodes
+    left_id     = (node_id - 1) % NUM_NODES
+    right_id    = (node_id + 1) % NUM_NODES
     listen_port = BASE_PORT + node_id
     left_port   = BASE_PORT + left_id
     right_port  = BASE_PORT + right_id
@@ -114,7 +114,7 @@ def run_node(node_id, my_ip, left_ip, right_ip,
     # ---- Header ----
     print()
     print(SEP)
-    print("  DECENTRALIZED FL  --  NODE")
+    print("  DECENTRALIZED FL  --  NODE  [TIMEOUT VARIANT: push=40s receive=60s (Exp 5A-T40/60)]")
     print(SEP)
     print()
     print(f"  Node ID      : {node_id}  (listen port: {listen_port})")
@@ -123,7 +123,8 @@ def run_node(node_id, my_ip, left_ip, right_ip,
     print(f"  Distribution : {distribution.upper()}  (alpha={alpha})")
     print(f"  Rounds       : {num_rounds}  |  Epochs: {local_epochs}"
           f"  |  Batch: {batch_size}  |  Samples: {samples_per_node}")
-    print(f"  Gossip       : Synchronous  (train -> push -> receive -> blend)")
+    print(f"  Gossip       : Synchronous  (train → push → receive → blend)")
+    print(f"  Timeout      : push=40s  receive=60s  (reduced from 90s/120s)")
     print(f"  Fault demo   : {'YES  --  Node 3 exits at round ' + str(FAIL_ROUND) if fault_demo else 'NO'}")
     print(f"  Started at   : {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print()
@@ -131,7 +132,7 @@ def run_node(node_id, my_ip, left_ip, right_ip,
     # ---- Dataset ----
     log_thin("Loading CIFAR-10...")
     train_loader, test_loader, n_train, dist_label = get_loaders(
-        node_id, distribution, alpha, samples_per_node, batch_size, num_nodes
+        node_id, distribution, alpha, samples_per_node, batch_size
     )
     log(f"Samples: {n_train}  ({dist_label})")
     log(f"Test set: 10,000  |  Model params: "
@@ -150,13 +151,13 @@ def run_node(node_id, my_ip, left_ip, right_ip,
         if fault_demo and node_id == 3 and round_num == FAIL_ROUND:
             print()
             print(SEP)
-            print("  EXPERIMENT 5-A  --  NODE 3 FAILURE")
+            print("  EXPERIMENT 5A-T40/60  --  NODE 3 FAILURE")
             print(SEP)
             print()
             log(f"Node 3 deliberately exiting at round {FAIL_ROUND}.")
             log(f"Neighbors (Node {left_id} left, Node {right_id} right)"
                 f" will detect this on their next push and continue.")
-            log(f"All remaining {num_nodes - 1} nodes will complete all {num_rounds} rounds.")
+            log(f"All remaining 7 nodes will complete all {num_rounds} rounds.")
             log(f"This proves no single point of failure in decentralized design.")
             print()
             sys.exit(0)
@@ -194,6 +195,7 @@ def run_node(node_id, my_ip, left_ip, right_ip,
         log(f"      Opening receive listener on port {listen_port}...")
         print()
 
+        # Start receive listener first — socket must be bound before neighbors push to us
         recv_results = {}
         socket_ready = threading.Event()
         recv_t = threading.Thread(
@@ -202,8 +204,9 @@ def run_node(node_id, my_ip, left_ip, right_ip,
             daemon=True
         )
         recv_t.start()
-        socket_ready.wait(timeout=10)
+        socket_ready.wait(timeout=10)   # wait until our socket is bound
 
+        # Push to both neighbors simultaneously
         push_results = {}
         t_comm       = time.time()
         push_l = threading.Thread(target=push_to_neighbor,
@@ -215,8 +218,8 @@ def run_node(node_id, my_ip, left_ip, right_ip,
         push_l.daemon = push_r.daemon = True
         push_l.start()
         push_r.start()
-        push_l.join(timeout=95)
-        push_r.join(timeout=95)
+        push_l.join(timeout=45)
+        push_r.join(timeout=45)
 
         left_ok   = push_results.get(f"Node-{left_id}")  == 'ok'
         right_ok  = push_results.get(f"Node-{right_id}") == 'ok'
@@ -231,9 +234,10 @@ def run_node(node_id, my_ip, left_ip, right_ip,
             f"  |  Right: {'OK' if right_ok else 'FAIL'}"
             f"  |  retries={push_retries}  timeouts={timeout_hits}")
         if push_fail and fault_demo:
-            log(f"      Push failure expected in Exp 5-A  --  neighbor node is down.")
+            log(f"      Push failure expected in Exp 5A-T40/60  --  neighbor node is down.")
 
-        recv_t.join(timeout=130)
+        # Wait for receive to complete
+        recv_t.join(timeout=65)
         comm_time = time.time() - t_comm
         received  = recv_results.get('received', [])
         recv_got  = len(received)
@@ -307,12 +311,13 @@ def run_node(node_id, my_ip, left_ip, right_ip,
 
     log(f"Finished at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
+    # ---- Final table ----
     if not results:
         return
 
     print()
     print(SEP)
-    print(f"  DECENTRALIZED FL  --  NODE {node_id}  --  RESULTS")
+    print(f"  DECENTRALIZED FL  --  NODE {node_id}  --  RESULTS  [Exp 5A-T40/60]")
     print(SEP)
     print()
     print(f"  {'Round':<7} {'Post-Train':>12}  {'Post-Blend':>12}  {'Change':>10}"
@@ -383,32 +388,30 @@ def run_node(node_id, my_ip, left_ip, right_ip,
 # ============================================================
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Decentralized FL Node  (Experiments 3, 4, 5-A)',
+        description='Decentralized FL Node  (Experiment 5A-T40/60  --  push=40s receive=60s)',
         formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument('node_id',  type=int,
-                        help='Node ID  (0 to num_nodes-1, determines listen port: 8000 + node_id)')
+                        help='Node ID  (0-7, determines listen port: 8000 + node_id)')
     parser.add_argument('my_ip',
                         help='Private IP of this instance')
     parser.add_argument('left_ip',
                         help='Private IP of left ring neighbor')
     parser.add_argument('right_ip',
                         help='Private IP of right ring neighbor')
-    parser.add_argument('--dist',      default='iid', choices=['iid', 'non_iid'],
+    parser.add_argument('--dist',   default='iid', choices=['iid', 'non_iid'],
                         help='Data distribution  (default: iid)')
-    parser.add_argument('--alpha',     type=float, default=0.5,
+    parser.add_argument('--alpha',  type=float, default=0.5,
                         help='Dirichlet alpha for non_iid  (default: 0.5)')
-    parser.add_argument('--rounds',    type=int, default=50,
+    parser.add_argument('--rounds', type=int, default=50,
                         help='Number of FL rounds  (default: 50)')
-    parser.add_argument('--num-nodes', type=int, default=8,
-                        help='Total number of nodes in the ring  (default: 8)')
     parser.add_argument('--fault-demo', action='store_true',
-                        help='Experiment 5-A: Node 3 exits at round 10 to demonstrate no-SPOF')
+                        help='Experiment 5A-T40/60: Node 3 exits at round 10 to demonstrate no-SPOF')
 
     args = parser.parse_args()
 
     if args.fault_demo:
-        exp_label = 'decentralized_fault'
+        exp_label = 'decentralized_fault_t40_60'
     elif args.dist == 'non_iid':
         exp_label = 'decentralized_noniid'
     else:
@@ -427,6 +430,5 @@ if __name__ == '__main__':
         samples_per_node = 6250,
         distribution     = args.dist,
         alpha            = args.alpha,
-        fault_demo       = args.fault_demo,
-        num_nodes        = args.num_nodes,
+        fault_demo       = args.fault_demo
     )

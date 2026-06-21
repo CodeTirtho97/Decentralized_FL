@@ -1,20 +1,19 @@
 """
-node_fc.py  --  Decentralized FL Node  (Experiments 6-A, 6-B, 6-C)
-               Fully-Connected topology, synchronous gossip weight sharing.
+node_timeout_low.py  --  Decentralized FL Node  (Experiment 5A-T15)
+                         Timeout variant: push=15s, receive=15s
+                         All other logic identical to node.py
 
-               Each node communicates with ALL other nodes every round.
-               Each round: Train -> Push to all peers -> Receive from all peers
-                           -> Blend (equal-weight avg over all models) -> Evaluate
+             Ring topology, 8 nodes, synchronous gossip weight sharing
+
+             Each round: Train → Push to neighbors → Receive from neighbors
+                         → Blend (equal-weight avg) → Evaluate
 
 Usage:
-    PYTHONPATH=src python3 src/node_fc.py <node_id> <ip_0> <ip_1> ... <ip_N-1>
-                                           [--dist iid|non_iid] [--alpha F]
-                                           [--rounds N] [--fault-demo]
+    python3 node_timeout_low.py <node_id> <my_ip> <left_ip> <right_ip>
+                   [--dist iid|non_iid] [--alpha F] [--rounds N] [--fault-demo]
 
 Examples:
-    PYTHONPATH=src python3 src/node_fc.py 0 10.0.0.1 10.0.0.2 10.0.0.3 10.0.0.4 10.0.0.5 10.0.0.6 10.0.0.7 10.0.0.8
-    PYTHONPATH=src python3 src/node_fc.py 0 <all_ips...> --dist non_iid
-    PYTHONPATH=src python3 src/node_fc.py 0 <all_ips...> --dist non_iid --fault-demo
+    python3 node_timeout_low.py 0 172.31.21.108 172.31.18.64 172.31.31.28 --fault-demo
 """
 
 import argparse
@@ -26,18 +25,18 @@ import time
 
 from shared.log   import log, log_thin, SEP, THIN, setup_file_logging
 from shared.model import CNNCifar
-from shared.data  import get_loaders
+from shared.data  import get_loaders, NUM_NODES
 from shared.net   import send_data, recv_data, make_server_socket
 from shared.train import train_local, evaluate, fedavg
 
-BASE_PORT  = 8000    # node i listens on BASE_PORT + i  (same scheme as node.py)
-FAIL_ROUND = 10      # Experiment 6-C: node 3 exits at this round
+BASE_PORT  = 8000    # node i listens on BASE_PORT + i
+FAIL_ROUND = 10      # Experiment 5-A: node 3 exits at this round
 
 
 # ============================================================
-# PUSH TO ONE PEER  --  retries until timeout
+# PUSH TO ONE NEIGHBOR  --  retries until timeout
 # ============================================================
-def push_to_peer(label, ip, port, weights_bytes, results_dict, timeout=90):
+def push_to_neighbor(label, ip, port, weights_bytes, results_dict, timeout=15):
     deadline = time.time() + timeout
     attempt  = 0
     while time.time() < deadline:
@@ -58,18 +57,18 @@ def push_to_peer(label, ip, port, weights_bytes, results_dict, timeout=90):
                 log(f"      PUSH retry {attempt}  -->  {label}"
                     f"  |  {e}  |  {int(deadline - time.time())}s left")
                 time.sleep(2)
-    log(f"      PUSH FAIL  -->  {label}  ({ip}:{port})  |  Peer may be down.")
+    log(f"      PUSH FAIL  -->  {label}  ({ip}:{port})  |  Neighbor may be down.")
     results_dict[label] = 'fail'
     results_dict[label + '_attempts'] = attempt
 
 
 # ============================================================
-# RECEIVE FROM ALL PEERS  --  per-round blocking listener
+# RECEIVE FROM NEIGHBORS  --  per-round blocking listener
 # ============================================================
-def receive_from_peers(my_ip, listen_port, expected_count,
-                       results_dict, ready_event, timeout=120):
+def receive_from_neighbors(my_ip, listen_port, expected_count,
+                           results_dict, ready_event, timeout=15):
     srv = make_server_socket(my_ip, listen_port, backlog=expected_count + 1)
-    ready_event.set()   # socket is bound -- callers may now push
+    ready_event.set()   # socket is bound — caller may now push
     srv.settimeout(2.0)
     received = []
     deadline = time.time() + timeout
@@ -93,51 +92,47 @@ def receive_from_peers(my_ip, listen_port, expected_count,
 
     srv.close()
     if len(received) < expected_count:
-        log(f"      WARNING: Received {len(received)}/{expected_count} peer models "
-            f"(peer down or timeout).")
+        log(f"      WARNING: Received {len(received)}/{expected_count} models "
+            f"(neighbor down or timeout).")
     results_dict['received'] = received
 
 
 # ============================================================
 # MAIN NODE LOOP
 # ============================================================
-def run_node(node_id, all_ips,
+def run_node(node_id, my_ip, left_ip, right_ip,
              num_rounds, local_epochs, batch_size,
              samples_per_node, distribution, alpha, fault_demo):
 
     device      = __import__('torch').device('cpu')
-    num_nodes   = len(all_ips)
-    my_ip       = all_ips[node_id]
+    left_id     = (node_id - 1) % NUM_NODES
+    right_id    = (node_id + 1) % NUM_NODES
     listen_port = BASE_PORT + node_id
-
-    peers     = [(j, all_ips[j], BASE_PORT + j) for j in range(num_nodes) if j != node_id]
-    num_peers = len(peers)
+    left_port   = BASE_PORT + left_id
+    right_port  = BASE_PORT + right_id
 
     # ---- Header ----
     print()
     print(SEP)
-    print("  DECENTRALIZED FL  --  FULLY-CONNECTED NODE")
+    print("  DECENTRALIZED FL  --  NODE  [TIMEOUT VARIANT: push=15s receive=15s (Exp 5A-T15)]")
     print(SEP)
     print()
     print(f"  Node ID      : {node_id}  (listen port: {listen_port})")
-    print(f"  My IP        : {my_ip}")
-    print(f"  Topology     : Fully Connected  (all {num_peers} peers per round)")
-    for peer_id, peer_ip, peer_port in peers:
-        print(f"  Peer Node {peer_id}  : {peer_ip}:{peer_port}")
+    print(f"  Left  (Node {left_id})  : {left_ip}:{left_port}")
+    print(f"  Right (Node {right_id})  : {right_ip}:{right_port}")
     print(f"  Distribution : {distribution.upper()}  (alpha={alpha})")
     print(f"  Rounds       : {num_rounds}  |  Epochs: {local_epochs}"
           f"  |  Batch: {batch_size}  |  Samples: {samples_per_node}")
-    print(f"  Gossip       : Synchronous  (train -> push all -> recv all -> blend)")
+    print(f"  Gossip       : Synchronous  (train → push → receive → blend)")
+    print(f"  Timeout      : push=15s  receive=15s  (reduced from 90s/120s)")
     print(f"  Fault demo   : {'YES  --  Node 3 exits at round ' + str(FAIL_ROUND) if fault_demo else 'NO'}")
-    if fault_demo:
-        print(f"  FC note      : ALL {num_peers} peers will detect the fault (vs only 2 in ring Exp 5-A)")
     print(f"  Started at   : {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print()
 
     # ---- Dataset ----
     log_thin("Loading CIFAR-10...")
     train_loader, test_loader, n_train, dist_label = get_loaders(
-        node_id, distribution, alpha, samples_per_node, batch_size, num_nodes
+        node_id, distribution, alpha, samples_per_node, batch_size
     )
     log(f"Samples: {n_train}  ({dist_label})")
     log(f"Test set: 10,000  |  Model params: "
@@ -152,19 +147,18 @@ def run_node(node_id, all_ips,
 
     for round_num in range(1, num_rounds + 1):
 
-        # ---- Experiment 6-C: Node 3 deliberately exits ----
+        # ---- Experiment 5-A: Node 3 deliberately exits ----
         if fault_demo and node_id == 3 and round_num == FAIL_ROUND:
             print()
             print(SEP)
-            print("  EXPERIMENT 6-C  --  NODE 3 FAILURE  (FULLY CONNECTED)")
+            print("  EXPERIMENT 5A-T15  --  NODE 3 FAILURE")
             print(SEP)
             print()
             log(f"Node 3 deliberately exiting at round {FAIL_ROUND}.")
-            log(f"ALL {num_nodes - 1} remaining peers will detect this failure.")
-            log(f"Each surviving node will push to Node 3 and hit the TCP timeout (90s).")
-            log(f"Each surviving node will receive {num_peers - 1}/{num_peers} peer models and blend.")
-            log(f"All {num_nodes - 1} surviving nodes will complete all {num_rounds} rounds.")
-            log(f"Contrast with Exp 5-A (ring): only 2 adjacent nodes detected the failure.")
+            log(f"Neighbors (Node {left_id} left, Node {right_id} right)"
+                f" will detect this on their next push and continue.")
+            log(f"All remaining 7 nodes will complete all {num_rounds} rounds.")
+            log(f"This proves no single point of failure in decentralized design.")
             print()
             sys.exit(0)
 
@@ -190,10 +184,10 @@ def run_node(node_id, all_ips,
         log(f"      Done  |  Time: {train_time:.3f}s  |  Accuracy: {acc_post_train:.2f}%")
         print()
 
-        # ---- [2/3] Exchange with ALL peers ----
-        log_thin(f"[2/3]  EXCHANGE WITH ALL PEERS  (Fully Connected: {num_peers} peers)")
-        for peer_id, peer_ip, peer_port in peers:
-            log(f"      Peer Node {peer_id}  :  {peer_ip}:{peer_port}")
+        # ---- [2/3] Exchange with neighbors (push + receive simultaneously) ----
+        log_thin(f"[2/3]  EXCHANGE WITH RING NEIGHBORS")
+        log(f"      Left  (Node {left_id})  :  {left_ip}:{left_port}")
+        log(f"      Right (Node {right_id})  :  {right_ip}:{right_port}")
         print()
 
         weights_bytes = pickle.dumps(model.state_dict())
@@ -201,61 +195,62 @@ def run_node(node_id, all_ips,
         log(f"      Opening receive listener on port {listen_port}...")
         print()
 
+        # Start receive listener first — socket must be bound before neighbors push to us
         recv_results = {}
         socket_ready = threading.Event()
         recv_t = threading.Thread(
-            target=receive_from_peers,
-            args=(my_ip, listen_port, num_peers, recv_results, socket_ready),
+            target=receive_from_neighbors,
+            args=(my_ip, listen_port, 2, recv_results, socket_ready),
             daemon=True
         )
         recv_t.start()
-        socket_ready.wait(timeout=10)
+        socket_ready.wait(timeout=10)   # wait until our socket is bound
 
+        # Push to both neighbors simultaneously
         push_results = {}
         t_comm       = time.time()
-        push_threads = []
-        for peer_id, peer_ip, peer_port in peers:
-            t = threading.Thread(
-                target=push_to_peer,
-                args=(f"Node-{peer_id}", peer_ip, peer_port,
-                      weights_bytes, push_results)
-            )
-            t.daemon = True
-            t.start()
-            push_threads.append(t)
+        push_l = threading.Thread(target=push_to_neighbor,
+                                   args=(f"Node-{left_id}", left_ip, left_port,
+                                         weights_bytes, push_results))
+        push_r = threading.Thread(target=push_to_neighbor,
+                                   args=(f"Node-{right_id}", right_ip, right_port,
+                                         weights_bytes, push_results))
+        push_l.daemon = push_r.daemon = True
+        push_l.start()
+        push_r.start()
+        push_l.join(timeout=20)
+        push_r.join(timeout=20)
 
-        for t in push_threads:
-            t.join(timeout=95)
+        left_ok   = push_results.get(f"Node-{left_id}")  == 'ok'
+        right_ok  = push_results.get(f"Node-{right_id}") == 'ok'
+        push_fail = not left_ok or not right_ok
 
-        ok_count     = sum(1 for pid, _, _ in peers
-                           if push_results.get(f"Node-{pid}") == 'ok')
-        fail_count   = num_peers - ok_count
-        push_retries = sum(
-            push_results.get(f"Node-{pid}_attempts", 1) - 1
-            for pid, _, _ in peers
-        )
-        timeout_hits = fail_count
+        left_attempts  = push_results.get(f"Node-{left_id}_attempts",  1)
+        right_attempts = push_results.get(f"Node-{right_id}_attempts", 1)
+        push_retries   = (left_attempts - 1) + (right_attempts - 1)
+        timeout_hits   = (0 if left_ok else 1) + (0 if right_ok else 1)
 
-        log(f"      Push done  |  {ok_count}/{num_peers} peers reached"
-            + (f"  |  {fail_count} FAILED  (peer down -- TCP timeout)" if fail_count else "")
-            + f"  |  retries={push_retries}  timeouts={timeout_hits}")
-        if fail_count and fault_demo:
-            log(f"      Push failure expected in Exp 6-C  --  Node 3 is down.")
+        log(f"      Push done  |  Left: {'OK' if left_ok else 'FAIL'}"
+            f"  |  Right: {'OK' if right_ok else 'FAIL'}"
+            f"  |  retries={push_retries}  timeouts={timeout_hits}")
+        if push_fail and fault_demo:
+            log(f"      Push failure expected in Exp 5A-T15  --  neighbor node is down.")
 
-        recv_t.join(timeout=130)
+        # Wait for receive to complete
+        recv_t.join(timeout=20)
         comm_time = time.time() - t_comm
         received  = recv_results.get('received', [])
         recv_got  = len(received)
 
         print()
         log(f"      Exchange done  |  Total comm time: {comm_time:.3f}s"
-            f"  |  Got {len(received)}/{num_peers} peer models")
+            f"  |  Got {len(received)}/2 neighbor models")
         print()
 
         # ---- [3/3] Blend + Evaluate ----
         log_thin("[3/3]  BLEND + EVALUATE")
 
-        bytes_tx_round = len(weights_bytes) * ok_count
+        bytes_tx_round = len(weights_bytes) * (int(left_ok) + int(right_ok))
         bytes_rx_round = sum(len(raw) for _, raw in received)
 
         if received:
@@ -267,7 +262,7 @@ def run_node(node_id, all_ips,
             model = CNNCifar().to(device)
             model.load_state_dict(fedavg(all_states))
             blends_total += len(received)
-            log(f"      Blended {len(received)} peer model(s)"
+            log(f"      Blended {len(received)} neighbor model(s)"
                 f"  |  Equal-weight avg ({len(all_states)} models)"
                 f"  |  Total blends: {blends_total}")
         else:
@@ -285,31 +280,29 @@ def run_node(node_id, all_ips,
         bytes_tx_total += bytes_tx_round
         bytes_rx_total += bytes_rx_round
 
-        any_push_fail = fail_count > 0
         results.append({
-            'round':             round_num,
-            'local_acc':         acc_post_train,
-            'blend_acc':         acc_blended,
-            'delta':             delta,
-            'train_time':        train_time,
-            'comm_time':         comm_time,
-            'round_time':        train_time + comm_time,
-            'bytes_pushed':      bytes_tx_round,
-            'bytes_rx_round':    bytes_rx_round,
-            'blends':            blends_total,
-            'ok_count':          ok_count,
-            'push_fail':         any_push_fail,
-            'push_retries':      push_retries,
-            'timeout_hits':      timeout_hits,
-            'peers_received':    recv_got,
+            'round':               round_num,
+            'local_acc':           acc_post_train,
+            'blend_acc':           acc_blended,
+            'delta':               delta,
+            'train_time':          train_time,
+            'comm_time':           comm_time,
+            'round_time':          train_time + comm_time,
+            'bytes_pushed':        bytes_tx_round,
+            'bytes_rx_round':      bytes_rx_round,
+            'blends':              blends_total,
+            'push_fail':           push_fail,
+            'push_retries':        push_retries,
+            'timeout_hits':        timeout_hits,
+            'neighbors_received':  recv_got,
         })
 
-        print(f"[COMM_SUMMARY] round={round_num} arch=fc node={node_id} "
+        print(f"[COMM_SUMMARY] round={round_num} arch=ring node={node_id} "
               f"train_time={train_time:.2f}s comm_time={comm_time:.2f}s "
               f"round_time={train_time + comm_time:.2f}s "
               f"bytes_sent={bytes_tx_round} bytes_recv={bytes_rx_round} "
               f"push_retries={push_retries} timeout_hits={timeout_hits} "
-              f"peers_received={recv_got} fanout={num_peers} "
+              f"neighbors_received={recv_got} fanout=2 "
               f"pre_blend_acc={acc_post_train:.2f}% post_blend_acc={acc_blended:.2f}%")
 
         if round_num < num_rounds:
@@ -318,12 +311,13 @@ def run_node(node_id, all_ips,
 
     log(f"Finished at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
+    # ---- Final table ----
     if not results:
         return
 
     print()
     print(SEP)
-    print(f"  DECENTRALIZED FL (FULLY CONNECTED)  --  NODE {node_id}  --  RESULTS")
+    print(f"  DECENTRALIZED FL  --  NODE {node_id}  --  RESULTS  [Exp 5A-T15]")
     print(SEP)
     print()
     print(f"  {'Round':<7} {'Post-Train':>12}  {'Post-Blend':>12}  {'Change':>10}"
@@ -335,7 +329,7 @@ def run_node(node_id, all_ips,
     for r in results:
         sign  = "+" if r['delta'] >= 0 else ""
         arrow = "UP" if r['delta'] > 0.5 else ("DOWN" if r['delta'] < -0.5 else "FLAT")
-        note  = f"  [PUSH {num_peers - r['ok_count']} FAIL]" if r.get('push_fail') else ""
+        note  = "  [NEIGHBOR DOWN]" if r.get('push_fail') else ""
         print(f"  {r['round']:<7} {r['local_acc']:>11.2f}%  "
               f"{r['blend_acc']:>11.2f}%  "
               f"{sign}{r['delta']:>9.2f}%  "
@@ -347,45 +341,42 @@ def run_node(node_id, all_ips,
               f"{r['blends']:>7}  "
               f"{r.get('push_retries', 0):>8}  "
               f"{r.get('timeout_hits', 0):>5}  "
-              f"{r.get('peers_received', '?'):>5}  "
+              f"{r.get('neighbors_received', '?'):>5}  "
               f"{arrow:>6}{note}")
 
-    completed = len(results)
-    final_acc = results[-1]['blend_acc']
-    best_acc  = max(r['blend_acc']  for r in results)
-    best_rnd  = max(results, key=lambda r: r['blend_acc'])['round']
-    avg_train = sum(r['train_time'] for r in results) / completed
-    avg_comm  = sum(r['comm_time']  for r in results) / completed
-    avg_round = sum(r['round_time'] for r in results) / completed
+    completed    = len(results)
+    final_acc    = results[-1]['blend_acc']
+    best_acc     = max(r['blend_acc']    for r in results)
+    best_rnd     = max(results, key=lambda r: r['blend_acc'])['round']
+    avg_train    = sum(r['train_time']   for r in results) / completed
+    avg_comm     = sum(r['comm_time']    for r in results) / completed
+    avg_round    = sum(r['round_time']   for r in results) / completed
 
     print()
     print(f"  Rounds completed   : {completed} / {num_rounds}")
     print(f"  Final accuracy     : {final_acc:.2f}%  (Round {completed})")
     print(f"  Best  accuracy     : {best_acc:.2f}%  (Round {best_rnd})")
     print(f"  Avg train / round  : {avg_train:.3f}s")
-    print(f"  Avg comm  / round  : {avg_comm:.3f}s  (push all + receive all)")
+    print(f"  Avg comm  / round  : {avg_comm:.3f}s  (push + receive)")
     print(f"  Avg round duration : {avg_round:.3f}s")
-    print(f"  Total pushed       : {bytes_tx_total/1024:.1f} KB  (sent to {num_peers} peers)")
+    print(f"  Total pushed       : {bytes_tx_total/1024:.1f} KB  (sent to neighbors)")
     print(f"  Total received     : {bytes_rx_total/1024:.1f} KB  (blends received)")
     print(f"  Total comm         : {(bytes_tx_total + bytes_rx_total)/1024:.1f} KB")
     print(f"  Total blends       : {blends_total}")
-    print(f"  Topology note      : Fully Connected  --  {num_peers}x comm vs ring (2 neighbors)")
 
     if fault_demo:
-        failed_rounds = [r['round'] for r in results if r.get('push_fail')]
+        failed = [r['round'] for r in results if r.get('push_fail')]
         print()
         print(f"  {THIN}")
         if node_id == 3:
             print(f"  This node (Node 3) exited at round {FAIL_ROUND} as planned.")
-        elif failed_rounds:
-            print(f"  Node 3 failure first detected : Round {failed_rounds[0]}")
-            print(f"  Rounds with push failure      : {failed_rounds}")
-            print(f"  This node completed           : {completed} / {num_rounds} rounds")
-            print(f"  RESULT: No SPOF in FC topology.")
-            print(f"  NOTE: ALL {num_nodes - 1} peers detected this failure (vs 2 in ring Exp 5-A).")
-            print(f"        FC fault impact is global; ring fault impact is localized.")
+        elif failed:
+            print(f"  Neighbor down first detected : Round {failed[0]}")
+            print(f"  Rounds with push failure     : {failed}")
+            print(f"  This node completed          : {completed} / {num_rounds} rounds")
+            print(f"  RESULT: No SPOF. System continued without Node 3.")
         else:
-            print(f"  No push failures detected.")
+            print(f"  No push failures detected (not adjacent to failed node).")
             print(f"  Completed all {completed} rounds unaffected.")
 
     print()
@@ -397,13 +388,17 @@ def run_node(node_id, all_ips,
 # ============================================================
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Decentralized FL Node -- Fully Connected  (Experiments 6-A, 6-B, 6-C)',
+        description='Decentralized FL Node  (Experiment 5A-T15  --  push=15s receive=15s)',
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument('node_id', type=int,
-                        help='Node ID  (0 to N-1, determines listen port: 8000 + node_id)')
-    parser.add_argument('all_ips', nargs='+', metavar='IP',
-                        help='IPs of ALL nodes in order: ip_0 ip_1 ... ip_N-1')
+    parser.add_argument('node_id',  type=int,
+                        help='Node ID  (0-7, determines listen port: 8000 + node_id)')
+    parser.add_argument('my_ip',
+                        help='Private IP of this instance')
+    parser.add_argument('left_ip',
+                        help='Private IP of left ring neighbor')
+    parser.add_argument('right_ip',
+                        help='Private IP of right ring neighbor')
     parser.add_argument('--dist',   default='iid', choices=['iid', 'non_iid'],
                         help='Data distribution  (default: iid)')
     parser.add_argument('--alpha',  type=float, default=0.5,
@@ -411,27 +406,29 @@ if __name__ == '__main__':
     parser.add_argument('--rounds', type=int, default=50,
                         help='Number of FL rounds  (default: 50)')
     parser.add_argument('--fault-demo', action='store_true',
-                        help='Experiment 6-C: Node 3 exits at round 10 -- FC fault tolerance demo')
+                        help='Experiment 5A-T15: Node 3 exits at round 10 to demonstrate no-SPOF')
 
     args = parser.parse_args()
 
     if args.fault_demo:
-        exp_label = 'decentralized_fc_fault'
+        exp_label = 'decentralized_fault_t15'
     elif args.dist == 'non_iid':
-        exp_label = 'decentralized_fc_noniid'
+        exp_label = 'decentralized_noniid'
     else:
-        exp_label = 'decentralized_fc_iid'
+        exp_label = 'decentralized_iid'
     log_path = setup_file_logging(exp_label, f'node_{args.node_id}')
     print(f"  Log file: {log_path}", flush=True)
 
     run_node(
         node_id          = args.node_id,
-        all_ips          = args.all_ips,
+        my_ip            = args.my_ip,
+        left_ip          = args.left_ip,
+        right_ip         = args.right_ip,
         num_rounds       = args.rounds,
         local_epochs     = 5,
         batch_size       = 64,
         samples_per_node = 6250,
         distribution     = args.dist,
         alpha            = args.alpha,
-        fault_demo       = args.fault_demo,
+        fault_demo       = args.fault_demo
     )

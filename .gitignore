@@ -1,12 +1,19 @@
-# User-specific configuration (contains real IPs and paths)
-config.env
-
-# SSH private keys — NEVER commit
+# AWS credentials and sensitive files
+aws_node_ips.md
 *.pem
-*.key
+fl-thesis-key.pem
+
+# Personal / thesis documents
+Implementation_Approach.md
+main.tex
+*.pdf
+
+# Screenshots (binary blobs, not source code)
+Screenshots/
 
 # Python
 __pycache__/
+shared/__pycache__/
 *.pyc
 *.pyo
 *.pyd
@@ -19,15 +26,20 @@ venv/
 .venv/
 env/
 
-# Dataset (large — downloadable automatically via torchvision)
+# Dataset (large, downloadable via torchvision)
 data/
 
-# Experiment output
+# Logs and experiment output
 logs/
 results/
-figures/
 *.log
 *.out
+
+# Private run guide and experiment scripts (contain real IPs)
+How_To_Implement.md
+exp*.sh
+launch.sh
+launch_fedstellar.sh
 
 # OS files
 .DS_Store

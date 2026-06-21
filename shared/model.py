@@ -1,6 +1,6 @@
 """
 shared/model.py  --  CNN model definition
-                     CNNCifar: lightweight CNN for CIFAR-10.
+                     CNNCifar: identical architecture to base GitFL paper (RTSS 2023)
                      Used by all experiments: centralized and decentralized.
 """
 

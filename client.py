@@ -2,13 +2,13 @@
 client.py  --  Centralized FL Client  (Experiments 1, 2, 5-B)
 
 Usage:
-    PYTHONPATH=src python3 src/client.py <node_id> <server_ip> [--dist iid|non_iid] [--alpha F]
-                                          [--rounds N] [--fault-demo]
+    python3 client.py <node_id> <server_ip> [--dist iid|non_iid] [--alpha F]
+                      [--rounds N] [--fault-demo]
 
 Examples:
-    PYTHONPATH=src python3 src/client.py 1 192.168.1.10
-    PYTHONPATH=src python3 src/client.py 1 192.168.1.10 --dist non_iid
-    PYTHONPATH=src python3 src/client.py 1 192.168.1.10 --dist non_iid --fault-demo
+    python3 client.py 1 172.31.21.108                            # Exp 1: IID
+    python3 client.py 1 172.31.21.108 --dist non_iid             # Exp 2: Non-IID
+    python3 client.py 1 172.31.21.108 --dist non_iid --fault-demo  # Exp 5-B: SPOF demo
 """
 
 import argparse
@@ -74,7 +74,7 @@ def recv_from_server(server_ip, port, timeout=300):
 # ============================================================
 def run_client(node_id, server_ip, distribution, alpha,
                num_rounds, local_epochs, batch_size,
-               samples_per_node, num_nodes, upload_port=9000, bcast_port=9001, fault_demo=False):
+               samples_per_node, upload_port=9000, bcast_port=9001, fault_demo=False):
 
     device = __import__('torch').device('cpu')
 
@@ -96,7 +96,7 @@ def run_client(node_id, server_ip, distribution, alpha,
     # ---- Dataset ----
     log_thin("Loading CIFAR-10...")
     train_loader, test_loader, n_train, dist_label = get_loaders(
-        node_id, distribution, alpha, samples_per_node, batch_size, num_nodes
+        node_id, distribution, alpha, samples_per_node, batch_size
     )
     log(f"Samples: {n_train}  ({dist_label})")
     log(f"Test set: 10,000  |  Model params: "
@@ -202,7 +202,7 @@ def run_client(node_id, server_ip, distribution, alpha,
 
         upload_retries   = upload_attempts - 1
         download_retries = download_attempts - 1
-        timeout_hits     = 0
+        timeout_hits     = 0  # reaching here means both succeeded
 
         results.append({
             'round':             round_num,
@@ -288,17 +288,15 @@ if __name__ == '__main__':
         formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument('node_id',   type=int,
-                        help='Client node ID  (1 to num_nodes-1)')
+                        help='Client node ID  (1-7)')
     parser.add_argument('server_ip',
                         help='Private IP of the server instance (Node 0)')
-    parser.add_argument('--dist',      default='iid', choices=['iid', 'non_iid'],
+    parser.add_argument('--dist',    default='iid', choices=['iid', 'non_iid'],
                         help='Data distribution  (default: iid)')
-    parser.add_argument('--alpha',     type=float, default=0.5,
+    parser.add_argument('--alpha',   type=float, default=0.5,
                         help='Dirichlet alpha for non_iid  (default: 0.5)')
-    parser.add_argument('--rounds',    type=int, default=50,
+    parser.add_argument('--rounds',  type=int, default=50,
                         help='Number of FL rounds  (default: 50)')
-    parser.add_argument('--num-nodes', type=int, default=8,
-                        help='Total number of nodes  (default: 8)')
     parser.add_argument('--fault-demo', action='store_true',
                         help='Experiment 5-B: log SPOF confirmation when server dies')
 
@@ -322,6 +320,5 @@ if __name__ == '__main__':
         local_epochs     = 5,
         batch_size       = 64,
         samples_per_node = 6250,
-        num_nodes        = args.num_nodes,
         fault_demo       = args.fault_demo
     )
