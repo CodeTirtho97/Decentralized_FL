@@ -1,8 +1,8 @@
-# Centralized vs. Decentralized Federated Learning
+# Synchronization and Fault Propagation in Decentralized Federated Learning
 
-> Does removing the central server cost you accuracy, communication efficiency, or fault tolerance? This thesis runs the experiment on real hardware to find out.
+> When a node fails in decentralized federated learning, does the failure stay local or cascade across the network? This thesis shows that the answer is decided by the **synchronization model**, not the topology — and runs the experiment on real hardware to prove it.
 
-A reproducible benchmark of **centralized** and **decentralized** federated learning (FL) on **CIFAR-10**, deployed across **8 AWS EC2 instances**. It compares FedAvg (server-based) against peer-to-peer gossip (ring and fully-connected topologies) and against the [p2pfl / Fedstellar](https://github.com/pyp2p/p2pfl) async-gRPC platform — measuring accuracy, communication overhead, and fault-cascade behavior under identical training settings.
+A reproducible study of how **synchronization** (blocking synchronous TCP vs. asynchronous gRPC) governs **fault propagation** in decentralized federated learning (FL) on **CIFAR-10**, deployed across **8 AWS EC2 instances**. Centralized FedAvg and peer-to-peer gossip (ring and fully-connected topologies) serve as baselines, and the [p2pfl / Fedstellar](https://github.com/pyp2p/p2pfl) async-gRPC platform provides the asynchronous counterpoint — all measured under identical training settings for accuracy, communication overhead, and fault-cascade behavior.
 
 <p align="left">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white">
@@ -18,11 +18,11 @@ A reproducible benchmark of **centralized** and **decentralized** federated lear
 
 | Finding | Evidence |
 |---|---|
+| **Synchronization decides fault propagation.** Under blocking synchronous TCP a single dead node triggers a 90+120 s timeout storm that stalls its neighbors; the *same* fault under asynchronous gRPC is absorbed locally with no cascade. | Exp 5-A (sync TCP) vs Exp 7-F (p2pfl async gRPC) |
+| **No server = no single point of failure — but the topology sets the blast radius.** Killing the centralized server halts *all* clients; killing a ring node is detected by only its 2 neighbors, while in a fully-connected graph all 7 survivors detect it. | Exp 5-B (SPOF) vs Exp 5-A (ring) vs Exp 6-C (FC) |
 | **Decentralization doesn't have to cost accuracy** — a *fully-connected* gossip network matches and slightly beats the centralized server. | FC IID **61.2%** vs Centralized IID **60.4%**; FC Non-IID **58.0%** vs Centralized Non-IID **56.4%** |
-| **Topology is the real lever.** A sparse *ring* trades ~4 accuracy points for resilience and lower per-node bandwidth. | Ring IID **56.5%** vs FC IID **61.2%** |
+| **Topology is the real accuracy lever.** A sparse *ring* trades ~4 accuracy points for resilience and lower per-node bandwidth. | Ring IID **56.5%** vs FC IID **61.2%** |
 | **Non-IID data punishes sparse gossip hardest.** | Ring drops **56.5% → 51.2%** under Non-IID — the largest gap of any design |
-| **No server = no single point of failure.** Kill the centralized server and *all* clients halt; kill a decentralized node and the rest keep training. | Exp 5-B (SPOF) vs Exp 5-A / 6-C |
-| **Async transport suppresses the fault cascade.** The 90–120 s synchronous-TCP timeout storm disappears under async gRPC. | Exp 5-A (sync TCP) vs Exp 7-F (p2pfl async gRPC) |
 
 <sub>Accuracies are per-node CIFAR-10 test accuracy, 8 nodes × 50 rounds, CPU-only `CNNCifar`. This is a **comparative** study of FL *designs* — not a chase for state-of-the-art absolute accuracy, so the numbers are deliberately modest and held constant across every experiment.</sub>
 
